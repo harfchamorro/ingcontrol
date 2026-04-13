@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Proyectos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--border:#2e2e38;--accent:#6ee7b7;--accent2:#818cf8;--text:#f1f1f3;--text2:#8888a0;--danger:#f87171;--warning:#fbbf24;--success:#4ade80;--radius:10px; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
+  .logo{font-size:15px;font-weight:600;color:var(--accent);}
+  .logo span{color:var(--text2);font-weight:400;}
+  .nav{display:flex;gap:8px;}
+  .nav a{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:8px;transition:all .15s;}
+  .nav a:hover{color:var(--text);background:var(--surface2);}
+  .nav a.active{color:var(--accent);background:rgba(110,231,183,.1);}
+  .container{max-width:1200px;margin:0 auto;padding:32px 24px;}
+  .page-title{font-size:22px;font-weight:600;margin-bottom:4px;}
+  .page-sub{font-size:14px;color:var(--text2);margin-bottom:28px;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;}
+  .stat-label{font-size:11px;color:var(--text2);margin-bottom:8px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;}
+  .stat-value{font-size:24px;font-weight:600;}
+  .stat-value.green{color:var(--accent);}
+  .stat-value.purple{color:var(--accent2);}
+  .stat-value.yellow{color:var(--warning);}
+  .stat-value.red{color:var(--danger);}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;}
+  .toolbar-left{display:flex;gap:10px;align-items:center;}
+  .search-wrap{position:relative;}
+  .search-wrap input{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 14px 9px 36px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;width:240px;outline:none;}
+  .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);}
+  select.filter{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#0f2419;}
+  .btn-primary:hover{background:#4fd4a0;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);}
+  .btn-sm{padding:5px 10px;font-size:12px;border-radius:6px;}
+  .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+  .btn-edit{background:transparent;border:1px solid var(--border);color:var(--text2);}
+  .btn-edit:hover{border-color:var(--accent2);color:var(--accent2);}
+  .btn-assign{background:transparent;border:1px solid var(--accent);color:var(--accent);}
+  .btn-assign:hover{background:rgba(110,231,183,.1);}
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+  .project-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;transition:border-color .2s;}
+  .project-card:hover{border-color:var(--accent2);}
+  .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+  .card-title{font-size:15px;font-weight:600;color:var(--text);}
+  .card-client{font-size:12px;color:var(--text2);margin-top:2px;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+  .badge-cotizacion{background:rgba(251,191,36,.12);color:var(--warning);}
+  .badge-en_curso{background:rgba(110,231,183,.12);color:var(--accent);}
+  .badge-pausado{background:rgba(129,140,248,.12);color:var(--accent2);}
+  .badge-completado{background:rgba(74,222,128,.12);color:var(--success);}
+  .badge-cancelado{background:rgba(248,113,113,.12);color:var(--danger);}
+  .badge-comercial{background:rgba(129,140,248,.12);color:var(--accent2);}
+  .badge-ingenieria{background:rgba(110,231,183,.12);color:var(--accent);}
+  .badge-fabricacion{background:rgba(251,191,36,.12);color:var(--warning);}
+  .card-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
+  .info-item{font-size:12px;}
+  .info-label{color:var(--text2);margin-bottom:2px;}
+  .info-value{color:var(--text);font-weight:500;font-family:'DM Mono',monospace;font-size:12px;}
+  .card-ingenieros{margin:12px 0;padding:10px;background:var(--surface2);border-radius:8px;}
+  .ing-label{font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
+  .ing-chips{display:flex;flex-wrap:wrap;gap:4px;}
+  .ing-chip{font-size:11px;padding:2px 8px;background:rgba(129,140,248,.15);color:var(--accent2);border-radius:20px;}
+  .card-actions{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+  .empty{text-align:center;padding:60px;color:var(--text2);font-size:14px;grid-column:1/-1;}
+  .loading{text-align:center;padding:60px;color:var(--text2);font-size:14px;grid-column:1/-1;}
+  .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;padding:28px;max-height:90vh;overflow-y:auto;}
+  .modal-title{font-size:18px;font-weight:600;margin-bottom:20px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .form-group{display:flex;flex-direction:column;gap:6px;}
+  .form-group.full{grid-column:1/-1;}
+  label{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;}
+  input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;width:100%;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent2);}
+  select option{background:#1a1a1f;color:var(--text);}
+  textarea{resize:vertical;min-height:80px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:14px;z-index:200;display:none;align-items:center;gap:10px;}
+  .toast.show{display:flex;}
+  .toast.success{border-color:var(--accent);color:var(--accent);}
+  .toast.error{border-color:var(--danger);color:var(--danger);}
+  .modal-assign{max-width:400px;}
+  .ing-select-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;}
+  .ing-select-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;cursor:pointer;border:1px solid transparent;}
+  .ing-select-item:hover{border-color:var(--accent2);}
+  .ing-select-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Ing<span>Control</span> · <span>Proyectos</span></div>
+  <nav class="nav">
+    <a href="index.html">Ingenieros</a>
+    <a href="proyectos.html" class="active">Proyectos</a>
+  </nav>
+  <button class="btn btn-primary" onclick="abrirModal()">+ Nuevo proyecto</button>
+</header>
+
+<div class="container">
+  <div class="page-title">Gestión de proyectos</div>
+  <div class="page-sub">Control de proyectos y asignación de ingenieros</div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-label">Total proyectos</div><div class="stat-value green" id="stat-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">En curso</div><div class="stat-value purple" id="stat-curso">—</div></div>
+    <div class="stat-card"><div class="stat-label">En cotización</div><div class="stat-value yellow" id="stat-cot">—</div></div>
+    <div class="stat-card"><div class="stat-label">Completados</div><div class="stat-value green" id="stat-comp">—</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="buscar" placeholder="Buscar proyecto..." oninput="filtrar()">
+      </div>
+      <select class="filter" id="filtro-estado" onchange="filtrar()">
+        <option value="">Todos los estados</option>
+        <option value="cotizacion">Cotización</option>
+        <option value="en_curso">En curso</option>
+        <option value="pausado">Pausado</option>
+        <option value="completado">Completado</option>
+      </select>
+      <select class="filter" id="filtro-dept" onchange="filtrar()">
+        <option value="">Todos los departamentos</option>
+        <option value="comercial">Comercial</option>
+        <option value="ingenieria">Ingeniería</option>
+        <option value="fabricacion">Fabricación</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="cards-grid" id="cards-grid">
+    <div class="loading"><span class="spinner"></span>Cargando proyectos...</div>
+  </div>
+</div>
+
+<!-- MODAL PROYECTO -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Nuevo proyecto</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Nombre del proyecto</label>
+        <input type="text" id="f-nombre" placeholder="Ej: Estructura metálica Electroval">
+      </div>
+      <div class="form-group">
+        <label>Departamento solicitante</label>
+        <select id="f-dept">
+          <option value="comercial">Comercial</option>
+          <option value="ingenieria">Ingeniería propia</option>
+          <option value="fabricacion">Fabricación</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Estado</label>
+        <select id="f-estado">
+          <option value="cotizacion">Cotización</option>
+          <option value="en_curso">En curso</option>
+          <option value="pausado">Pausado</option>
+          <option value="completado">Completado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Valor estimado ($)</label>
+        <input type="number" id="f-valor" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Fecha inicio</label>
+        <input type="date" id="f-inicio">
+      </div>
+      <div class="form-group">
+        <label>Fecha fin estimada</label>
+        <input type="date" id="f-fin">
+      </div>
+      <div class="form-group full">
+        <label>Descripción</label>
+        <textarea id="f-desc" placeholder="Descripción del proyecto..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ASIGNAR -->
+<div class="modal-overlay" id="modal-assign">
+  <div class="modal modal-assign">
+    <div class="modal-title">Asignar ingenieros</div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Proyecto</label>
+      <div id="assign-proyecto-nombre" style="font-size:14px;color:var(--text);padding:8px;background:var(--surface2);border-radius:8px;"></div>
+    </div>
+    <div class="form-group">
+      <label>Selecciona ingenieros</label>
+      <div class="ing-select-list" id="ing-select-list"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cerrarModalAssign()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarAsignacion()">Asignar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://primary-production-420b7.up.railway.app/webhook/proyectos';
+const API_ING = 'https://primary-production-420b7.up.railway.app/webhook/ingenieros';
+let proyectos = [], ingenieros = [], editandoId = null, asignandoId = null;
+
+async function llamarAPI(url, accion, datos={}) {
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({accion,...datos})
+  });
+  if(!res.ok) throw new Error('Error '+res.status);
+  return res.json();
+}
+
+function formatCOP(n) { return '$'+Number(n||0).toLocaleString('es-CO'); }
+function formatFecha(f) { return f ? f.split('T')[0] : '—'; }
+
+function badgeEstado(e) {
+  const labels = {cotizacion:'Cotización',en_curso:'En curso',pausado:'Pausado',completado:'Completado',cancelado:'Cancelado'};
+  return `<span class="badge badge-${e}">${labels[e]||e}</span>`;
+}
+
+function badgeDept(d) {
+  const labels = {comercial:'Comercial',ingenieria:'Ingeniería',fabricacion:'Fabricación'};
+  return `<span class="badge badge-${d}">${labels[d]||d}</span>`;
+}
+
+async function cargar() {
+  try {
+    const [dataP, dataI] = await Promise.all([
+      llamarAPI(API, 'listar'),
+      llamarAPI(API_ING, 'listar')
+    ]);
+    proyectos = Array.isArray(dataP) ? dataP : (dataP.data ? [].concat(dataP.data) : []);
+    ingenieros = Array.isArray(dataI) ? dataI : (dataI.data ? [].concat(dataI.data) : []);
+    renderCards(proyectos);
+    actualizarStats();
+  } catch(e) {
+    document.getElementById('cards-grid').innerHTML = '<div class="empty">Error al conectar. Verifica que N8N esté activo.</div>';
+  }
+}
+
+function actualizarStats() {
+  document.getElementById('stat-total').textContent = proyectos.length;
+  document.getElementById('stat-curso').textContent = proyectos.filter(p=>p.estado==='en_curso').length;
+  document.getElementById('stat-cot').textContent = proyectos.filter(p=>p.estado==='cotizacion').length;
+  document.getElementById('stat-comp').textContent = proyectos.filter(p=>p.estado==='completado').length;
+}
+
+function renderCards(lista) {
+  const grid = document.getElementById('cards-grid');
+  if(!lista.length) { grid.innerHTML='<div class="empty">No hay proyectos. Crea el primero.</div>'; return; }
+  grid.innerHTML = lista.map(p => `
+    <div class="project-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${p.nombre}</div>
+          <div class="card-client">${p.cliente_nombre || 'Sin cliente'}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+          ${badgeEstado(p.estado)}
+          ${badgeDept(p.departamento_solicitante)}
+        </div>
+      </div>
+      <div class="card-info">
+        <div class="info-item">
+          <div class="info-label">Valor estimado</div>
+          <div class="info-value">${formatCOP(p.valor_estimado)}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Fecha inicio</div>
+          <div class="info-value">${formatFecha(p.fecha_inicio)}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Fecha fin est.</div>
+          <div class="info-value">${formatFecha(p.fecha_fin_estimada)}</div>
+        </div>
+      </div>
+      ${p.descripcion ? `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${p.descripcion}</div>` : ''}
+      <div class="card-actions">
+        <button class="btn btn-edit btn-sm" onclick="editar(${p.id})">Editar</button>
+        <button class="btn btn-assign btn-sm" onclick="abrirModalAssign(${p.id}, '${p.nombre.replace(/'/g,"\\'")}')">Asignar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminar(${p.id})">Cancelar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filtrar() {
+  const q = document.getElementById('buscar').value.toLowerCase();
+  const estado = document.getElementById('filtro-estado').value;
+  const dept = document.getElementById('filtro-dept').value;
+  const filtrados = proyectos.filter(p => {
+    const matchQ = (p.nombre+' '+(p.cliente_nombre||'')+(p.descripcion||'')).toLowerCase().includes(q);
+    const matchE = !estado || p.estado === estado;
+    const matchD = !dept || p.departamento_solicitante === dept;
+    return matchQ && matchE && matchD;
+  });
+  renderCards(filtrados);
+}
+
+function abrirModal(id=null) {
+  editandoId = id;
+  document.getElementById('modal-title').textContent = id ? 'Editar proyecto' : 'Nuevo proyecto';
+  if(id) {
+    const p = proyectos.find(x=>x.id==id);
+    document.getElementById('f-nombre').value = p.nombre||'';
+    document.getElementById('f-dept').value = p.departamento_solicitante||'comercial';
+    document.getElementById('f-estado').value = p.estado||'cotizacion';
+    document.getElementById('f-valor').value = p.valor_estimado||'';
+    document.getElementById('f-inicio').value = formatFecha(p.fecha_inicio);
+    document.getElementById('f-fin').value = formatFecha(p.fecha_fin_estimada);
+    document.getElementById('f-desc').value = p.descripcion||'';
+  } else {
+    ['f-nombre','f-valor','f-inicio','f-fin','f-desc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-dept').value='comercial';
+    document.getElementById('f-estado').value='cotizacion';
+  }
+  document.getElementById('modal').classList.add('open');
+}
+
+function cerrarModal() { document.getElementById('modal').classList.remove('open'); editandoId=null; }
+
+function editar(id) { abrirModal(id); }
+
+async function eliminar(id) {
+  if(!confirm('¿Cancelar este proyecto?')) return;
+  try {
+    await llamarAPI(API, 'eliminar', {id});
+    toast('Proyecto cancelado','success');
+    cargar();
+  } catch(e) { toast('Error al cancelar','error'); }
+}
+
+async function guardar() {
+  const datos = {
+    nombre: document.getElementById('f-nombre').value.trim(),
+    departamento_solicitante: document.getElementById('f-dept').value,
+    estado: document.getElementById('f-estado').value,
+    valor_estimado: parseFloat(document.getElementById('f-valor').value)||0,
+    fecha_inicio: document.getElementById('f-inicio').value||null,
+    fecha_fin_estimada: document.getElementById('f-fin').value||null,
+    descripcion: document.getElementById('f-desc').value.trim()
+  };
+  if(!datos.nombre) { toast('El nombre es obligatorio','error'); return; }
+  try {
+    if(editandoId) {
+      await llamarAPI(API, 'actualizar', {id:editandoId,...datos});
+      toast('Proyecto actualizado','success');
+    } else {
+      await llamarAPI(API, 'crear', datos);
+      toast('Proyecto creado','success');
+    }
+    cerrarModal(); cargar();
+  } catch(e) { toast('Error al guardar','error'); }
+}
+
+function abrirModalAssign(id, nombre) {
+  asignandoId = id;
+  document.getElementById('assign-proyecto-nombre').textContent = nombre;
+  const list = document.getElementById('ing-select-list');
+  list.innerHTML = ingenieros.filter(i=>i.activo==1).map(i=>`
+    <label class="ing-select-item">
+      <input type="checkbox" value="${i.id}">
+      <div>
+        <div style="font-size:14px;font-weight:500;">${i.nombre} ${i.apellido}</div>
+        <div style="font-size:12px;color:var(--text2);">${i.cargo||''}</div>
+      </div>
+    </label>
+  `).join('');
+  document.getElementById('modal-assign').classList.add('open');
+}
+
+function cerrarModalAssign() { document.getElementById('modal-assign').classList.remove('open'); asignandoId=null; }
+
+async function guardarAsignacion() {
+  const checks = document.querySelectorAll('#ing-select-list input[type=checkbox]:checked');
+  if(!checks.length) { toast('Selecciona al menos un ingeniero','error'); return; }
+  try {
+    for(const c of checks) {
+      await llamarAPI(API, 'asignar', {proyecto_id:asignandoId, ingeniero_id:parseInt(c.value)});
+    }
+    toast('Ingenieros asignados','success');
+    cerrarModalAssign(); cargar();
+  } catch(e) { toast('Error al asignar','error'); }
+}
+
+function toast(msg,tipo='success') {
+  const t=document.getElementById('toast');
+  t.textContent=(tipo==='success'?'✓ ':'✗ ')+msg;
+  t.className='toast show '+tipo;
+  setTimeout(()=>t.className='toast',3000);
+}
+
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))cerrarModal();});
+document.getElementById('modal-assign').addEventListener('click',e=>{if(e.target===document.getElementById('modal-assign'))cerrarModalAssign();});
+
+cargar();
+</script>
+</body>
+</html>

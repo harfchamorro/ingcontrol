@@ -374,7 +374,7 @@ async function guardar() {
       toast('Proyecto creado','success');
     }
     cerrarModal(); cargar();
-  } catch(e) { toast('Error al guardar','error'); }
+  } catch(e) { toast(e.message?.includes('Duplicate') ? 'Ya existe un proyecto con ese nombre' : 'Error al guardar','error'); }
 }
 
 function abrirModalAssign(id, nombre) {
@@ -404,7 +404,7 @@ async function guardarAsignacion() {
     }
     toast('Ingenieros asignados','success');
     cerrarModalAssign(); cargar();
-  } catch(e) { toast('Error al asignar','error'); }
+  } catch(e) { toast(e.message?.includes('Duplicate') ? 'Este ingeniero ya está asignado al proyecto' : 'Error al asignar','error'); }
 }
 
 function toast(msg,tipo='success') {

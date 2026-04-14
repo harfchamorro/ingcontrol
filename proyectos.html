@@ -297,6 +297,12 @@ function renderCards(lista) {
         </div>
       </div>
       ${p.descripcion ? `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${p.descripcion}</div>` : ''}
+      <div class="card-ingenieros">
+        <div class="ing-label">Ingenieros asignados</div>
+        <div class="ing-chips">
+          ${p.ingenieros_asignados ? p.ingenieros_asignados.split(', ').map(n=>`<span class="ing-chip">${n}</span>`).join('') : '<span style="font-size:12px;color:var(--text2);">Sin asignar</span>'}
+        </div>
+      </div>
       <div class="card-actions">
         <button class="btn btn-edit btn-sm" onclick="editar(${p.id})">Editar</button>
         <button class="btn btn-assign btn-sm" onclick="abrirModalAssign(${p.id}, '${p.nombre.replace(/'/g,"\\'")}')">Asignar</button>

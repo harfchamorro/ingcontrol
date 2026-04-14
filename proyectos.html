@@ -73,7 +73,8 @@
   @keyframes spin{to{transform:rotate(360deg);}}
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;}
   .modal-overlay.open{display:flex;}
-  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;padding:28px;max-height:90vh;overflow-y:auto;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:560px;padding:28px;max-height:95vh;overflow-y:auto;}
+  .required{color:var(--danger);margin-left:2px;}
   .modal-title{font-size:18px;font-weight:600;margin-bottom:20px;}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .form-group{display:flex;flex-direction:column;gap:6px;}
@@ -149,20 +150,22 @@
     <div class="modal-title" id="modal-title">Nuevo proyecto</div>
     <div class="form-grid">
       <div class="form-group full">
-        <label>Nombre del proyecto</label>
+        <label>Nombre del proyecto <span class="required">*</span></label>
         <input type="text" id="f-nombre" placeholder="Ej: Estructura metálica Electroval">
       </div>
       <div class="form-group">
-        <label>Departamento solicitante</label>
+        <label>Departamento solicitante <span class="required">*</span></label>
         <select id="f-dept">
+          <option value="">Seleccionar...</option>
           <option value="comercial">Comercial</option>
           <option value="ingenieria">Ingeniería propia</option>
           <option value="fabricacion">Fabricación</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Estado</label>
+        <label>Estado <span class="required">*</span></label>
         <select id="f-estado">
+          <option value="">Seleccionar...</option>
           <option value="cotizacion">Cotización</option>
           <option value="en_curso">En curso</option>
           <option value="pausado">Pausado</option>
@@ -330,8 +333,8 @@ function abrirModal(id=null) {
     document.getElementById('f-desc').value = p.descripcion||'';
   } else {
     ['f-nombre','f-valor','f-inicio','f-fin','f-desc'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('f-dept').value='comercial';
-    document.getElementById('f-estado').value='cotizacion';
+    document.getElementById('f-dept').value='';
+    document.getElementById('f-estado').value='';
   }
   document.getElementById('modal').classList.add('open');
 }
@@ -360,6 +363,8 @@ async function guardar() {
     descripcion: document.getElementById('f-desc').value.trim()
   };
   if(!datos.nombre) { toast('El nombre es obligatorio','error'); return; }
+  if(!datos.departamento_solicitante) { toast('Selecciona el departamento solicitante','error'); return; }
+  if(!datos.estado) { toast('Selecciona el estado del proyecto','error'); return; }
   try {
     if(editandoId) {
       await llamarAPI(API, 'actualizar', {id:editandoId,...datos});

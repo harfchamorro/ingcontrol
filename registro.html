@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Tiempo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--border:#2e2e38;--accent:#6ee7b7;--accent2:#818cf8;--text:#f1f1f3;--text2:#8888a0;--danger:#f87171;--warning:#fbbf24;--success:#4ade80;--radius:10px; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
+  .logo{font-size:15px;font-weight:600;color:var(--accent);}
+  .logo span{color:var(--text2);font-weight:400;}
+  .nav{display:flex;gap:8px;}
+  .nav a{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:8px;transition:all .15s;}
+  .nav a:hover{color:var(--text);background:var(--surface2);}
+  .nav a.active{color:var(--accent);background:rgba(110,231,183,.1);}
+  .container{max-width:1200px;margin:0 auto;padding:32px 24px;}
+  .page-title{font-size:22px;font-weight:600;margin-bottom:4px;}
+  .page-sub{font-size:14px;color:var(--text2);margin-bottom:28px;}
+  .layout{display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start;}
+  .form-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;position:sticky;top:24px;}
+  .form-card-title{font-size:16px;font-weight:600;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  label{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;}
+  input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;width:100%;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent2);}
+  select option{background:#1a1a1f;color:var(--text);}
+  .required{color:var(--danger);margin-left:2px;}
+  .tipo-tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .tipo-tab{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s;}
+  .tipo-tab.active{background:rgba(110,231,183,.1);border-color:var(--accent);color:var(--accent);}
+  .horas-hint{font-size:12px;color:var(--accent);margin-top:4px;display:none;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;border:none;transition:all .15s;width:100%;}
+  .btn-primary{background:var(--accent);color:#0f2419;}
+  .btn-primary:hover{background:#4fd4a0;}
+  .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);width:auto;padding:5px 10px;font-size:12px;border-radius:6px;}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+  .stat-label{font-size:11px;color:var(--text2);margin-bottom:6px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;}
+  .stat-value{font-size:22px;font-weight:600;}
+  .stat-value.green{color:var(--accent);}
+  .stat-value.purple{color:var(--accent2);}
+  .stat-value.yellow{color:var(--warning);}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;}
+  .search-wrap{position:relative;flex:1;}
+  .search-wrap input{width:100%;}
+  .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);}
+  .search-wrap input{padding-left:36px;}
+  select.filter{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{padding:10px 14px;text-align:left;font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);font-weight:400;}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface2);}
+  tbody td{padding:10px 14px;font-size:13px;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+  .badge-proyecto{background:rgba(129,140,248,.12);color:var(--accent2);}
+  .badge-reunion{background:rgba(110,231,183,.12);color:var(--accent);}
+  .badge-capacitacion{background:rgba(251,191,36,.12);color:var(--warning);}
+  .badge-administrativo{background:rgba(248,113,113,.12);color:var(--danger);}
+  .badge-otro{background:rgba(136,136,160,.12);color:var(--text2);}
+  .diff-pos{color:var(--danger);font-family:'DM Mono',monospace;font-size:12px;}
+  .diff-neg{color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;}
+  .diff-ok{color:var(--text2);font-family:'DM Mono',monospace;font-size:12px;}
+  .mono{font-family:'DM Mono',monospace;font-size:12px;}
+  .empty{text-align:center;padding:40px;color:var(--text2);font-size:14px;}
+  .loading{text-align:center;padding:30px;color:var(--text2);font-size:14px;}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:14px;z-index:200;display:none;align-items:center;}
+  .toast.show{display:flex;}
+  .toast.success{border-color:var(--accent);color:var(--accent);}
+  .toast.error{border-color:var(--danger);color:var(--danger);}
+  .section-divider{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;padding:8px 14px;background:var(--surface2);border-bottom:1px solid var(--border);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Ing<span>Control</span> · <span>Registro de tiempo</span></div>
+  <nav class="nav">
+    <a href="index.html">Ingenieros</a>
+    <a href="proyectos.html">Proyectos</a>
+    <a href="actividades.html">Actividades</a>
+    <a href="registro.html" class="active">Registro</a>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="page-title">Registro de tiempo</div>
+  <div class="page-sub">Registra las horas trabajadas por actividad y proyecto</div>
+
+  <div class="layout">
+    <!-- FORMULARIO -->
+    <div class="form-card">
+      <div class="form-card-title">Nueva entrada</div>
+
+      <div class="form-group">
+        <label>Ingeniero <span class="required">*</span></label>
+        <select id="f-ingeniero" onchange="cargarProyectos()">
+          <option value="">Seleccionar ingeniero...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Fecha <span class="required">*</span></label>
+        <input type="date" id="f-fecha">
+      </div>
+
+      <div class="form-group">
+        <label>Tipo de actividad <span class="required">*</span></label>
+        <div class="tipo-tabs">
+          <button class="tipo-tab active" onclick="setTipo('proyecto')">Proyecto</button>
+          <button class="tipo-tab" onclick="setTipo('reunion')">Reunión</button>
+          <button class="tipo-tab" onclick="setTipo('capacitacion')">Capacitación</button>
+          <button class="tipo-tab" onclick="setTipo('administrativo')">Admin</button>
+        </div>
+      </div>
+
+      <div id="grupo-proyecto">
+        <div class="form-group">
+          <label>Proyecto</label>
+          <select id="f-proyecto" onchange="cargarActividades()">
+            <option value="">Seleccionar proyecto...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Actividad</label>
+          <select id="f-actividad" onchange="mostrarHorasEstandar()">
+            <option value="">Seleccionar actividad...</option>
+          </select>
+          <div class="horas-hint" id="horas-hint"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Horas reales <span class="required">*</span></label>
+        <input type="number" id="f-horas" placeholder="0.5" min="0.5" step="0.5">
+      </div>
+
+      <div class="form-group">
+        <label>Notas</label>
+        <textarea id="f-notas" placeholder="Descripción opcional..." rows="2"></textarea>
+      </div>
+
+      <button class="btn btn-primary" onclick="guardar()">Registrar tiempo</button>
+    </div>
+
+    <!-- TABLA -->
+    <div>
+      <div class="stats">
+        <div class="stat-card"><div class="stat-label">Horas hoy</div><div class="stat-value green" id="stat-hoy">—</div></div>
+        <div class="stat-card"><div class="stat-label">Horas semana</div><div class="stat-value purple" id="stat-semana">—</div></div>
+        <div class="stat-card"><div class="stat-label">Registros mes</div><div class="stat-value yellow" id="stat-mes">—</div></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="buscar" placeholder="Buscar..." oninput="filtrar()">
+        </div>
+        <select class="filter" id="filtro-ing" onchange="filtrar()">
+          <option value="">Todos los ingenieros</option>
+        </select>
+        <select class="filter" id="filtro-tipo" onchange="filtrar()">
+          <option value="">Todos los tipos</option>
+          <option value="proyecto">Proyecto</option>
+          <option value="reunion">Reunión</option>
+          <option value="capacitacion">Capacitación</option>
+          <option value="administrativo">Administrativo</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Ingeniero</th>
+              <th>Tipo</th>
+              <th>Proyecto / Actividad</th>
+              <th>Horas reales</th>
+              <th>Estándar</th>
+              <th>Diferencia</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body">
+            <tr><td colspan="8" class="loading"><span class="spinner"></span>Cargando registros...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://primary-production-420b7.up.railway.app/webhook/registro-tiempo';
+const API_ING = 'https://primary-production-420b7.up.railway.app/webhook/ingenieros';
+const API_PROY = 'https://primary-production-420b7.up.railway.app/webhook/proyectos';
+const API_ACT = 'https://primary-production-420b7.up.railway.app/webhook/actividades';
+
+let registros=[], ingenieros=[], proyectos=[], actividades=[], tipoActual='proyecto';
+
+async function api(url, accion, datos={}) {
+  const res = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion,...datos})});
+  if(!res.ok) throw new Error('Error '+res.status);
+  return res.json();
+}
+
+function parseData(d) { return Array.isArray(d) ? d : (d.data ? [].concat(d.data) : []); }
+
+async function cargarInicial() {
+  try {
+    const [dataR, dataI, dataP, dataA] = await Promise.all([
+      api(API, 'listar'),
+      api(API_ING, 'listar'),
+      api(API_PROY, 'listar'),
+      api(API_ACT, 'listar')
+    ]);
+    registros = parseData(dataR);
+    ingenieros = parseData(dataI).filter(i=>i.activo==1);
+    proyectos = parseData(dataP);
+    actividades = parseData(dataA);
+
+    const selIng = document.getElementById('f-ingeniero');
+    selIng.innerHTML = '<option value="">Seleccionar ingeniero...</option>' +
+      ingenieros.map(i=>`<option value="${i.id}">${i.nombre} ${i.apellido}</option>`).join('');
+
+    const filtroIng = document.getElementById('filtro-ing');
+    filtroIng.innerHTML = '<option value="">Todos los ingenieros</option>' +
+      ingenieros.map(i=>`<option value="${i.id}">${i.nombre} ${i.apellido}</option>`).join('');
+
+    const selProy = document.getElementById('f-proyecto');
+    selProy.innerHTML = '<option value="">Seleccionar proyecto...</option>' +
+      proyectos.map(p=>`<option value="${p.id}" data-complejidad="${p.complejidad||''}">${p.nombre}</option>`).join('');
+
+    renderTabla(registros);
+    actualizarStats();
+  } catch(e) {
+    document.getElementById('tabla-body').innerHTML = '<tr><td colspan="8" class="empty">Error al conectar.</td></tr>';
+  }
+}
+
+function cargarActividades() {
+  const proyId = document.getElementById('f-proyecto').value;
+  const sel = document.getElementById('f-actividad');
+  sel.innerHTML = '<option value="">Seleccionar actividad...</option>' +
+    actividades.map(a=>`<option value="${a.id}" data-h-pequeño="${a['horas_pequeño']||''}" data-h-mediano="${a.horas_mediano||''}" data-h-grande="${a.horas_grande||''}">${a.nombre}</option>`).join('');
+  document.getElementById('horas-hint').style.display = 'none';
+}
+
+function cargarProyectos() { cargarActividades(); }
+
+function mostrarHorasEstandar() {
+  const actOpt = document.getElementById('f-actividad').selectedOptions[0];
+  const proyOpt = document.getElementById('f-proyecto').selectedOptions[0];
+  if(!actOpt || !actOpt.value || !proyOpt || !proyOpt.value) { document.getElementById('horas-hint').style.display='none'; return; }
+  const comp = proyOpt.getAttribute('data-complejidad');
+  let horas = null;
+  if(comp==='pequeño') horas = actOpt.getAttribute('data-h-pequeño');
+  else if(comp==='mediano') horas = actOpt.getAttribute('data-h-mediano');
+  else if(comp==='grande') horas = actOpt.getAttribute('data-h-grande');
+  const hint = document.getElementById('horas-hint');
+  if(horas) {
+    hint.textContent = `Tiempo estándar para proyecto ${comp}: ${horas}h`;
+    hint.style.display = 'block';
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+function setTipo(tipo) {
+  tipoActual = tipo;
+  document.querySelectorAll('.tipo-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('grupo-proyecto').style.display = tipo==='proyecto' ? 'block' : 'none';
+}
+
+function actualizarStats() {
+  const hoy = new Date().toISOString().split('T')[0];
+  const semana = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+  const mes = new Date().getMonth();
+  const anio = new Date().getFullYear();
+  const horasHoy = registros.filter(r=>r.fecha?.startsWith(hoy)).reduce((s,r)=>s+parseFloat(r.horas_reales||0),0);
+  const horasSemana = registros.filter(r=>r.fecha>=semana).reduce((s,r)=>s+parseFloat(r.horas_reales||0),0);
+  const regMes = registros.filter(r=>{const d=new Date(r.fecha);return d.getMonth()===mes&&d.getFullYear()===anio;}).length;
+  document.getElementById('stat-hoy').textContent = horasHoy.toFixed(1)+'h';
+  document.getElementById('stat-semana').textContent = horasSemana.toFixed(1)+'h';
+  document.getElementById('stat-mes').textContent = regMes;
+}
+
+function renderTabla(lista) {
+  const tbody = document.getElementById('tabla-body');
+  if(!lista.length) { tbody.innerHTML='<tr><td colspan="8" class="empty">No hay registros aún.</td></tr>'; return; }
+  const tipoLabels = {proyecto:'Proyecto',reunion:'Reunión',capacitacion:'Capacitación',administrativo:'Administrativo',otro:'Otro'};
+  tbody.innerHTML = lista.map(r => {
+    const diff = r.diferencia !== null && r.diferencia !== undefined ? parseFloat(r.diferencia) : null;
+    const diffHtml = diff === null ? '<span class="diff-ok">—</span>' :
+      diff > 0 ? `<span class="diff-pos">+${diff}h</span>` :
+      diff < 0 ? `<span class="diff-neg">${diff}h</span>` :
+      '<span class="diff-ok">0h</span>';
+    return `<tr>
+      <td class="mono">${r.fecha?.split('T')[0]||'—'}</td>
+      <td style="font-weight:500;">${r.ingeniero_nombre||'—'}</td>
+      <td><span class="badge badge-${r.tipo}">${tipoLabels[r.tipo]||r.tipo}</span></td>
+      <td>
+        <div style="font-size:13px;">${r.proyecto_nombre||'—'}</div>
+        ${r.actividad_nombre ? `<div style="font-size:11px;color:var(--text2);">${r.actividad_nombre}</div>` : ''}
+      </td>
+      <td class="mono" style="font-weight:500;">${parseFloat(r.horas_reales||0).toFixed(1)}h</td>
+      <td class="mono" style="color:var(--text2);">${r.horas_estandar ? parseFloat(r.horas_estandar).toFixed(1)+'h' : '—'}</td>
+      <td>${diffHtml}</td>
+      <td><button class="btn btn-danger" onclick="eliminar(${r.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filtrar() {
+  const q = document.getElementById('buscar').value.toLowerCase();
+  const ing = document.getElementById('filtro-ing').value;
+  const tipo = document.getElementById('filtro-tipo').value;
+  const filtrados = registros.filter(r => {
+    const matchQ = ((r.ingeniero_nombre||'')+(r.proyecto_nombre||'')+(r.actividad_nombre||'')).toLowerCase().includes(q);
+    const matchI = !ing || r.ingeniero_id == ing;
+    const matchT = !tipo || r.tipo === tipo;
+    return matchQ && matchI && matchT;
+  });
+  renderTabla(filtrados);
+}
+
+async function eliminar(id) {
+  if(!confirm('¿Eliminar este registro?')) return;
+  try {
+    await api(API, 'eliminar', {id});
+    toast('Registro eliminado','success');
+    cargarInicial();
+  } catch(e) { toast('Error al eliminar','error'); }
+}
+
+async function guardar() {
+  const ingId = document.getElementById('f-ingeniero').value;
+  const fecha = document.getElementById('f-fecha').value;
+  const horas = parseFloat(document.getElementById('f-horas').value);
+
+  if(!ingId) { toast('Selecciona un ingeniero','error'); return; }
+  if(!fecha) { toast('Selecciona la fecha','error'); return; }
+  if(!horas || horas <= 0) { toast('Ingresa las horas reales','error'); return; }
+  if(tipoActual === 'proyecto' && !document.getElementById('f-proyecto').value) {
+    toast('Selecciona un proyecto','error'); return;
+  }
+
+  const proyId = document.getElementById('f-proyecto').value || null;
+  const actId = document.getElementById('f-actividad').value || null;
+
+  let horasEstandar = null;
+  if(actId && proyId) {
+    const actOpt = document.getElementById('f-actividad').selectedOptions[0];
+    const proyOpt = document.getElementById('f-proyecto').selectedOptions[0];
+    const comp = proyOpt.getAttribute('data-complejidad');
+    if(comp==='pequeño') horasEstandar = parseFloat(actOpt.getAttribute('data-h-pequeño'))||null;
+    else if(comp==='mediano') horasEstandar = parseFloat(actOpt.getAttribute('data-h-mediano'))||null;
+    else if(comp==='grande') horasEstandar = parseFloat(actOpt.getAttribute('data-h-grande'))||null;
+  }
+
+  const datos = {
+    ingeniero_id: parseInt(ingId),
+    fecha,
+    tipo: tipoActual,
+    proyecto_id: proyId ? parseInt(proyId) : null,
+    actividad_catalogo_id: actId ? parseInt(actId) : null,
+    horas_reales: horas,
+    horas_estandar: horasEstandar,
+    descripcion: document.getElementById('f-notas').value.trim()
+  };
+
+  try {
+    await api(API, 'crear', datos);
+    toast('Tiempo registrado','success');
+    document.getElementById('f-horas').value='';
+    document.getElementById('f-notas').value='';
+    cargarInicial();
+  } catch(e) { toast('Error al registrar','error'); }
+}
+
+function toast(msg,tipo='success') {
+  const t=document.getElementById('toast');
+  t.textContent=(tipo==='success'?'✓ ':'✗ ')+msg;
+  t.className='toast show '+tipo;
+  setTimeout(()=>t.className='toast',3000);
+}
+
+// Set today's date
+document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
+cargarInicial();
+</script>
+</body>
+</html>

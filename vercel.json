@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/proyectos", "destination": "/proyectos.html" }
+    { "source": "/proyectos", "destination": "/proyectos.html" },
+    { "source": "/actividades", "destination": "/actividades.html" }
   ]
 }

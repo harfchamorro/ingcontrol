@@ -216,16 +216,23 @@ function parseData(d) { return Array.isArray(d) ? d : (d.data ? [].concat(d.data
 
 async function cargarInicial() {
   try {
-    const [dataR, dataI, dataP, dataA] = await Promise.all([
-      api(API, 'listar'),
+    // Primero carga ingenieros, proyectos y actividades
+    const [dataI, dataP, dataA] = await Promise.all([
       api(API_ING, 'listar'),
       api(API_PROY, 'listar'),
       api(API_ACT, 'listar')
     ]);
-    registros = parseData(dataR);
     ingenieros = parseData(dataI).filter(i=>i.activo==1);
     proyectos = parseData(dataP);
     actividades = parseData(dataA);
+
+    // Luego carga registros por separado
+    try {
+      const dataR = await api(API, 'listar');
+      registros = parseData(dataR);
+    } catch(e) {
+      registros = [];
+    }
 
     const selIng = document.getElementById('f-ingeniero');
     selIng.innerHTML = '<option value="">Seleccionar ingeniero...</option>' +

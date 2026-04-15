@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo de Actividades</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--border:#2e2e38;--accent:#6ee7b7;--accent2:#818cf8;--text:#f1f1f3;--text2:#8888a0;--danger:#f87171;--warning:#fbbf24;--success:#4ade80;--radius:10px; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
+  .logo{font-size:15px;font-weight:600;color:var(--accent);}
+  .logo span{color:var(--text2);font-weight:400;}
+  .nav{display:flex;gap:8px;}
+  .nav a{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:8px;transition:all .15s;}
+  .nav a:hover{color:var(--text);background:var(--surface2);}
+  .nav a.active{color:var(--accent);background:rgba(110,231,183,.1);}
+  .container{max-width:1100px;margin:0 auto;padding:32px 24px;}
+  .page-title{font-size:22px;font-weight:600;margin-bottom:4px;}
+  .page-sub{font-size:14px;color:var(--text2);margin-bottom:28px;}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;}
+  .stat-label{font-size:11px;color:var(--text2);margin-bottom:8px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;}
+  .stat-value{font-size:24px;font-weight:600;}
+  .stat-value.green{color:var(--accent);}
+  .stat-value.purple{color:var(--accent2);}
+  .stat-value.yellow{color:var(--warning);}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;}
+  .toolbar-left{display:flex;gap:10px;align-items:center;}
+  .search-wrap{position:relative;}
+  .search-wrap input{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 14px 9px 36px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;width:240px;outline:none;}
+  .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);}
+  select.filter{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#0f2419;}
+  .btn-primary:hover{background:#4fd4a0;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);}
+  .btn-sm{padding:5px 10px;font-size:12px;border-radius:6px;}
+  .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+  .btn-edit{background:transparent;border:1px solid var(--border);color:var(--text2);}
+  .btn-edit:hover{border-color:var(--accent2);color:var(--accent2);}
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{padding:12px 16px;text-align:left;font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);font-weight:400;}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface2);}
+  tbody td{padding:12px 16px;font-size:14px;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+  .badge-baja{background:rgba(110,231,183,.12);color:var(--accent);}
+  .badge-media{background:rgba(251,191,36,.12);color:var(--warning);}
+  .badge-alta{background:rgba(248,113,113,.12);color:var(--danger);}
+  .badge-generica{background:rgba(129,140,248,.12);color:var(--accent2);}
+  .badge-especifica{background:rgba(251,191,36,.12);color:var(--warning);}
+  .mono{font-family:'DM Mono',monospace;font-size:13px;}
+  .horas-grid{display:flex;gap:8px;}
+  .hora-item{text-align:center;}
+  .hora-label{font-size:10px;color:var(--text2);display:block;}
+  .hora-val{font-size:13px;font-weight:500;font-family:'DM Mono',monospace;}
+  .hora-val.p{color:var(--accent);}
+  .hora-val.m{color:var(--warning);}
+  .hora-val.g{color:var(--danger);}
+  .actions{display:flex;gap:6px;}
+  .empty{text-align:center;padding:48px;color:var(--text2);font-size:14px;}
+  .loading{text-align:center;padding:40px;color:var(--text2);font-size:14px;}
+  .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:540px;padding:28px;}
+  .modal-title{font-size:18px;font-weight:600;margin-bottom:20px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .form-group{display:flex;flex-direction:column;gap:6px;}
+  .form-group.full{grid-column:1/-1;}
+  label{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;}
+  input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;width:100%;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent2);}
+  select option{background:#1a1a1f;color:var(--text);}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;}
+  .required{color:var(--danger);margin-left:2px;}
+  .horas-section{background:var(--surface2);border-radius:8px;padding:12px;margin-top:4px;}
+  .horas-section-title{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;}
+  .horas-inputs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:14px;z-index:200;display:none;align-items:center;gap:10px;}
+  .toast.show{display:flex;}
+  .toast.success{border-color:var(--accent);color:var(--accent);}
+  .toast.error{border-color:var(--danger);color:var(--danger);}
+  .section-header{font-size:13px;font-weight:500;color:var(--text2);padding:8px 16px;background:var(--surface2);border-bottom:1px solid var(--border);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Ing<span>Control</span> · <span>Actividades</span></div>
+  <nav class="nav">
+    <a href="index.html">Ingenieros</a>
+    <a href="proyectos.html">Proyectos</a>
+    <a href="actividades.html" class="active">Actividades</a>
+  </nav>
+  <button class="btn btn-primary" onclick="abrirModal()">+ Nueva actividad</button>
+</header>
+
+<div class="container">
+  <div class="page-title">Catálogo de actividades</div>
+  <div class="page-sub">Define actividades con tiempos estándar por tamaño de proyecto</div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-label">Total actividades</div><div class="stat-value green" id="stat-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Genéricas</div><div class="stat-value purple" id="stat-genericas">—</div></div>
+    <div class="stat-card"><div class="stat-label">Específicas</div><div class="stat-value yellow" id="stat-especificas">—</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="buscar" placeholder="Buscar actividad..." oninput="filtrar()">
+      </div>
+      <select class="filter" id="filtro-tipo" onchange="filtrar()">
+        <option value="">Todas</option>
+        <option value="generica">Genéricas</option>
+        <option value="especifica">Específicas de proyecto</option>
+      </select>
+      <select class="filter" id="filtro-comp" onchange="filtrar()">
+        <option value="">Toda complejidad</option>
+        <option value="baja">Baja</option>
+        <option value="media">Media</option>
+        <option value="alta">Alta</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Actividad</th>
+          <th>Tipo</th>
+          <th>Complejidad</th>
+          <th>Horas por tamaño</th>
+          <th>Proyecto</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-body">
+        <tr><td colspan="6" class="loading"><span class="spinner"></span>Cargando actividades...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Nueva actividad</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Nombre de la actividad <span class="required">*</span></label>
+        <input type="text" id="f-nombre" placeholder="Ej: Diseño de planos">
+      </div>
+      <div class="form-group">
+        <label>Complejidad <span class="required">*</span></label>
+        <select id="f-complejidad">
+          <option value="">Seleccionar...</option>
+          <option value="baja">Baja</option>
+          <option value="media">Media</option>
+          <option value="alta">Alta</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="f-tipo" onchange="toggleProyecto()">
+          <option value="generica">Genérica</option>
+          <option value="especifica">Específica de proyecto</option>
+        </select>
+      </div>
+      <div class="form-group full" id="grupo-proyecto" style="display:none;">
+        <label>Proyecto específico</label>
+        <select id="f-proyecto">
+          <option value="">Seleccionar proyecto...</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Descripción</label>
+        <input type="text" id="f-desc" placeholder="Descripción opcional">
+      </div>
+      <div class="form-group full">
+        <div class="horas-section">
+          <div class="horas-section-title">Horas estándar por tamaño de proyecto</div>
+          <div class="horas-inputs">
+            <div class="form-group">
+              <label>Pequeño</label>
+              <input type="number" id="f-h-pequeño" placeholder="0" min="0" step="0.5">
+            </div>
+            <div class="form-group">
+              <label>Mediano</label>
+              <input type="number" id="f-h-mediano" placeholder="0" min="0" step="0.5">
+            </div>
+            <div class="form-group">
+              <label>Grande</label>
+              <input type="number" id="f-h-grande" placeholder="0" min="0" step="0.5">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://primary-production-420b7.up.railway.app/webhook/actividades';
+const API_PROY = 'https://primary-production-420b7.up.railway.app/webhook/proyectos';
+let actividades = [], proyectos = [], editandoId = null;
+
+async function llamarAPI(url, accion, datos={}) {
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({accion,...datos})
+  });
+  if(!res.ok) throw new Error('Error '+res.status);
+  return res.json();
+}
+
+async function cargar() {
+  try {
+    const [dataA, dataP] = await Promise.all([
+      llamarAPI(API, 'listar'),
+      llamarAPI(API_PROY, 'listar')
+    ]);
+    actividades = Array.isArray(dataA) ? dataA : (dataA.data ? [].concat(dataA.data) : []);
+    proyectos = Array.isArray(dataP) ? dataP : (dataP.data ? [].concat(dataP.data) : []);
+    
+    const select = document.getElementById('f-proyecto');
+    select.innerHTML = '<option value="">Seleccionar proyecto...</option>' +
+      proyectos.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+    
+    renderTabla(actividades);
+    actualizarStats();
+  } catch(e) {
+    document.getElementById('tabla-body').innerHTML = '<tr><td colspan="6" class="empty">Error al conectar. Verifica que N8N esté activo.</td></tr>';
+  }
+}
+
+function actualizarStats() {
+  document.getElementById('stat-total').textContent = actividades.length;
+  document.getElementById('stat-genericas').textContent = actividades.filter(a=>!a.proyecto_id).length;
+  document.getElementById('stat-especificas').textContent = actividades.filter(a=>a.proyecto_id).length;
+}
+
+function renderTabla(lista) {
+  const tbody = document.getElementById('tabla-body');
+  if(!lista.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">No hay actividades. Crea la primera.</td></tr>'; return; }
+  tbody.innerHTML = lista.map(a => `
+    <tr>
+      <td>
+        <div style="font-weight:500;">${a.nombre}</div>
+        ${a.descripcion ? `<div style="font-size:12px;color:var(--text2);">${a.descripcion}</div>` : ''}
+      </td>
+      <td><span class="badge badge-${a.proyecto_id ? 'especifica' : 'generica'}">${a.proyecto_id ? 'Específica' : 'Genérica'}</span></td>
+      <td><span class="badge badge-${a.complejidad}">${a.complejidad}</span></td>
+      <td>
+        <div class="horas-grid">
+          <div class="hora-item"><span class="hora-label">Pequeño</span><span class="hora-val p">${a['horas_pequeño'] || '—'}h</span></div>
+          <div class="hora-item"><span class="hora-label">Mediano</span><span class="hora-val m">${a.horas_mediano || '—'}h</span></div>
+          <div class="hora-item"><span class="hora-label">Grande</span><span class="hora-val g">${a.horas_grande || '—'}h</span></div>
+        </div>
+      </td>
+      <td style="font-size:13px;color:var(--text2);">${a.proyecto_nombre || '—'}</td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-edit btn-sm" onclick="editar(${a.id})">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminar(${a.id})">Eliminar</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filtrar() {
+  const q = document.getElementById('buscar').value.toLowerCase();
+  const tipo = document.getElementById('filtro-tipo').value;
+  const comp = document.getElementById('filtro-comp').value;
+  const filtradas = actividades.filter(a => {
+    const matchQ = (a.nombre+(a.descripcion||'')).toLowerCase().includes(q);
+    const matchT = !tipo || (tipo==='generica' ? !a.proyecto_id : !!a.proyecto_id);
+    const matchC = !comp || a.complejidad === comp;
+    return matchQ && matchT && matchC;
+  });
+  renderTabla(filtradas);
+}
+
+function toggleProyecto() {
+  const tipo = document.getElementById('f-tipo').value;
+  document.getElementById('grupo-proyecto').style.display = tipo==='especifica' ? 'flex' : 'none';
+}
+
+function abrirModal(id=null) {
+  editandoId = id;
+  document.getElementById('modal-title').textContent = id ? 'Editar actividad' : 'Nueva actividad';
+  if(id) {
+    const a = actividades.find(x=>x.id==id);
+    document.getElementById('f-nombre').value = a.nombre||'';
+    document.getElementById('f-complejidad').value = a.complejidad||'';
+    document.getElementById('f-tipo').value = a.proyecto_id ? 'especifica' : 'generica';
+    document.getElementById('f-proyecto').value = a.proyecto_id||'';
+    document.getElementById('f-desc').value = a.descripcion||'';
+    document.getElementById('f-h-pequeño').value = a['horas_pequeño']||'';
+    document.getElementById('f-h-mediano').value = a.horas_mediano||'';
+    document.getElementById('f-h-grande').value = a.horas_grande||'';
+    toggleProyecto();
+  } else {
+    ['f-nombre','f-desc','f-h-pequeño','f-h-mediano','f-h-grande'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-complejidad').value='';
+    document.getElementById('f-tipo').value='generica';
+    document.getElementById('grupo-proyecto').style.display='none';
+  }
+  document.getElementById('modal').classList.add('open');
+}
+
+function cerrarModal() { document.getElementById('modal').classList.remove('open'); editandoId=null; }
+function editar(id) { abrirModal(id); }
+
+async function eliminar(id) {
+  if(!confirm('¿Eliminar esta actividad?')) return;
+  try {
+    await llamarAPI(API, 'eliminar', {id});
+    toast('Actividad eliminada','success');
+    cargar();
+  } catch(e) { toast('Error al eliminar','error'); }
+}
+
+async function guardar() {
+  const tipo = document.getElementById('f-tipo').value;
+  const datos = {
+    nombre: document.getElementById('f-nombre').value.trim(),
+    complejidad: document.getElementById('f-complejidad').value,
+    descripcion: document.getElementById('f-desc').value.trim(),
+    proyecto_id: tipo==='especifica' ? (document.getElementById('f-proyecto').value||null) : null,
+    horas_pequeño: parseFloat(document.getElementById('f-h-pequeño').value)||null,
+    horas_mediano: parseFloat(document.getElementById('f-h-mediano').value)||null,
+    horas_grande: parseFloat(document.getElementById('f-h-grande').value)||null,
+    tiempo_estandar_horas: parseFloat(document.getElementById('f-h-mediano').value)||0
+  };
+  if(!datos.nombre) { toast('El nombre es obligatorio','error'); return; }
+  if(!datos.complejidad) { toast('Selecciona la complejidad','error'); return; }
+  try {
+    if(editandoId) {
+      await llamarAPI(API, 'actualizar', {id:editandoId,...datos});
+      toast('Actividad actualizada','success');
+    } else {
+      await llamarAPI(API, 'crear', datos);
+      toast('Actividad creada','success');
+    }
+    cerrarModal(); cargar();
+  } catch(e) { toast('Error al guardar','error'); }
+}
+
+function toast(msg,tipo='success') {
+  const t=document.getElementById('toast');
+  t.textContent=(tipo==='success'?'✓ ':'✗ ')+msg;
+  t.className='toast show '+tipo;
+  setTimeout(()=>t.className='toast',3000);
+}
+
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))cerrarModal();});
+cargar();
+</script>
+</body>
+</html>

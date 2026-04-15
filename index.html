@@ -3,115 +3,402 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestión de Ingenieros</title>
+<title>IngControl</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-  :root { --bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--border:#2e2e38;--accent:#6ee7b7;--accent2:#818cf8;--text:#f1f1f3;--text2:#8888a0;--danger:#f87171;--warning:#fbbf24;--radius:10px; }
+  :root { --bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--border:#2e2e38;--accent:#6ee7b7;--accent2:#818cf8;--text:#f1f1f3;--text2:#8888a0;--danger:#f87171;--warning:#fbbf24;--radius:10px;--nav-w:220px; }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-  header{border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
-  .logo{font-size:15px;font-weight:600;color:var(--accent);}
-  .logo span{color:var(--text2);font-weight:400;}
-  .container{max-width:1100px;margin:0 auto;padding:32px 24px;}
-  .page-title{font-size:22px;font-weight:600;margin-bottom:4px;}
-  .page-sub{font-size:14px;color:var(--text2);margin-bottom:28px;}
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
-  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;}
-  .stat-label{font-size:12px;color:var(--text2);margin-bottom:8px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;}
-  .stat-value{font-size:26px;font-weight:600;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;}
+
+  /* SIDEBAR */
+  .sidebar{width:var(--nav-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:50;}
+  .sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border);}
+  .sidebar-logo-text{font-size:18px;font-weight:600;color:var(--accent);}
+  .sidebar-logo-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+  .sidebar-nav{flex:1;padding:12px 0;}
+  .nav-section{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;padding:8px 20px 4px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;transition:all .15s;border-left:2px solid transparent;color:var(--text2);font-size:14px;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:rgba(110,231,183,.08);color:var(--accent);border-left-color:var(--accent);}
+  .nav-icon{font-size:16px;width:20px;text-align:center;}
+  .sidebar-footer{padding:16px 20px;border-top:1px solid var(--border);font-size:12px;color:var(--text2);}
+
+  /* MAIN */
+  .main{margin-left:var(--nav-w);flex:1;min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{padding:16px 32px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;}
+  .topbar-title{font-size:16px;font-weight:600;}
+  .topbar-sub{font-size:13px;color:var(--text2);}
+  .content{flex:1;padding:28px 32px;overflow-y:auto;}
+
+  /* PAGES */
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* STATS */
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;}
+  .stat-label{font-size:11px;color:var(--text2);margin-bottom:8px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;}
+  .stat-value{font-size:24px;font-weight:600;}
   .stat-value.green{color:var(--accent);}
   .stat-value.purple{color:var(--accent2);}
-  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-  .search-wrap{position:relative;}
-  .search-wrap input{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 14px 9px 36px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;width:260px;outline:none;}
-  .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);}
-  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
-  .btn-primary{background:var(--accent);color:#0f2419;}
-  .btn-primary:hover{background:#4fd4a0;}
-  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);}
-  .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);padding:6px 12px;font-size:13px;}
-  .btn-edit{background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 12px;font-size:13px;}
-  .btn-edit:hover{border-color:var(--accent2);color:var(--accent2);}
+  .stat-value.yellow{color:var(--warning);}
+  .stat-value.red{color:var(--danger);}
+
+  /* TABLES */
   .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   table{width:100%;border-collapse:collapse;}
   thead th{padding:12px 16px;text-align:left;font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);font-weight:400;}
   tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
   tbody tr:last-child{border-bottom:none;}
   tbody tr:hover{background:var(--surface2);}
-  tbody td{padding:14px 16px;font-size:14px;}
-  .avatar{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:10px;flex-shrink:0;}
-  .name-cell{display:flex;align-items:center;}
-  .name-text{font-weight:500;}
-  .email-text{font-size:12px;color:var(--text2);}
-  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;}
-  .badge-active{background:rgba(110,231,183,.12);color:var(--accent);}
-  .mono{font-family:'DM Mono',monospace;font-size:13px;}
-  .actions{display:flex;gap:6px;}
-  .empty{text-align:center;padding:48px;color:var(--text2);font-size:14px;}
+  tbody td{padding:12px 16px;font-size:14px;}
+
+  /* TOOLBAR */
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;}
+  .toolbar-left{display:flex;gap:10px;align-items:center;flex:1;}
+  .search-wrap{position:relative;}
+  .search-wrap input{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 14px 9px 36px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;width:240px;outline:none;}
+  .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);}
+  select.filter{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#0f2419;}
+  .btn-primary:hover{background:#4fd4a0;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);}
+  .btn-sm{padding:5px 10px;font-size:12px;border-radius:6px;}
+  .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+  .btn-edit{background:transparent;border:1px solid var(--border);color:var(--text2);}
+  .btn-edit:hover{border-color:var(--accent2);color:var(--accent2);}
+  .btn-assign{background:transparent;border:1px solid var(--accent);color:var(--accent);}
+
+  /* BADGES */
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+  .badge-active,.badge-activo{background:rgba(110,231,183,.12);color:var(--accent);}
+  .badge-baja{background:rgba(110,231,183,.12);color:var(--accent);}
+  .badge-media{background:rgba(251,191,36,.12);color:var(--warning);}
+  .badge-alta{background:rgba(248,113,113,.12);color:var(--danger);}
+  .badge-cotizacion{background:rgba(251,191,36,.12);color:var(--warning);}
+  .badge-en_curso{background:rgba(110,231,183,.12);color:var(--accent);}
+  .badge-pausado{background:rgba(129,140,248,.12);color:var(--accent2);}
+  .badge-completado{background:rgba(74,222,128,.12);color:#4ade80;}
+  .badge-comercial{background:rgba(129,140,248,.12);color:var(--accent2);}
+  .badge-ingenieria{background:rgba(110,231,183,.12);color:var(--accent);}
+  .badge-fabricacion{background:rgba(251,191,36,.12);color:var(--warning);}
+  .badge-pequeño{background:rgba(110,231,183,.12);color:var(--accent);}
+  .badge-mediano{background:rgba(251,191,36,.12);color:var(--warning);}
+  .badge-grande{background:rgba(248,113,113,.12);color:var(--danger);}
+  .badge-generica{background:rgba(129,140,248,.12);color:var(--accent2);}
+  .badge-especifica{background:rgba(251,191,36,.12);color:var(--warning);}
+  .badge-proyecto{background:rgba(129,140,248,.12);color:var(--accent2);}
+  .badge-reunion{background:rgba(110,231,183,.12);color:var(--accent);}
+  .badge-capacitacion{background:rgba(251,191,36,.12);color:var(--warning);}
+  .badge-administrativo{background:rgba(248,113,113,.12);color:var(--danger);}
+
+  /* FORMS */
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;}
   .modal-overlay.open{display:flex;}
-  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:480px;padding:28px;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:540px;padding:28px;max-height:90vh;overflow-y:auto;}
   .modal-title{font-size:18px;font-weight:600;margin-bottom:20px;}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .form-group{display:flex;flex-direction:column;gap:6px;}
   .form-group.full{grid-column:1/-1;}
   label{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;}
-  input,select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;width:100%;}
-  input:focus,select:focus{border-color:var(--accent2);}
+  input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;width:100%;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent2);}
   select option{background:#1a1a1f;color:var(--text);}
-  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;}
-  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:14px;z-index:200;display:none;align-items:center;gap:10px;}
-  .toast.show{display:flex;}
-  .toast.success{border-color:var(--accent);color:var(--accent);}
-  .toast.error{border-color:var(--danger);color:var(--danger);}
-  .loading{text-align:center;padding:40px;color:var(--text2);font-size:14px;}
-  .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle;}
-  @keyframes spin{to{transform:rotate(360deg);}}
+  textarea{resize:vertical;min-height:70px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+  .required{color:var(--danger);margin-left:2px;}
+
+  /* MISC */
+  .avatar{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:10px;flex-shrink:0;}
+  .name-cell{display:flex;align-items:center;}
   .av-0{background:rgba(110,231,183,.15);color:var(--accent);}
   .av-1{background:rgba(129,140,248,.15);color:var(--accent2);}
   .av-2{background:rgba(251,191,36,.15);color:var(--warning);}
   .av-3{background:rgba(248,113,113,.15);color:var(--danger);}
   .av-4{background:rgba(167,139,250,.15);color:#c4b5fd;}
+  .mono{font-family:'DM Mono',monospace;font-size:13px;}
+  .empty{text-align:center;padding:48px;color:var(--text2);font-size:14px;}
+  .loading-text{text-align:center;padding:40px;color:var(--text2);font-size:14px;}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:14px;z-index:200;display:none;align-items:center;}
+  .toast.show{display:flex;}
+  .toast.success{border-color:var(--accent);color:var(--accent);}
+  .toast.error{border-color:var(--danger);color:var(--danger);}
+
+  /* DASHBOARD */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;}
+  .card-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:16px;text-transform:uppercase;letter-spacing:.04em;font-family:'DM Mono',monospace;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .bar-label{font-size:13px;color:var(--text);width:120px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-wrap{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;}
+  .bar-val{font-size:12px;font-weight:500;font-family:'DM Mono',monospace;min-width:50px;text-align:right;}
+  .ing-row-dash{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+  .ing-row-dash:last-child{border-bottom:none;}
+  .pct-bar{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin:0 8px;}
+  .pct-fill{height:100%;border-radius:3px;}
+
+  /* REGISTRO */
+  .tipo-tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .tipo-tab{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;}
+  .tipo-tab.active{background:rgba(110,231,183,.1);border-color:var(--accent);color:var(--accent);}
+  .horas-hint{font-size:12px;color:var(--accent);margin-top:4px;display:none;}
+  .reg-layout{display:grid;grid-template-columns:360px 1fr;gap:24px;align-items:start;}
+  .form-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;position:sticky;top:0;}
+  .form-card-title{font-size:15px;font-weight:600;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+  .diff-pos{color:var(--danger);font-family:'DM Mono',monospace;font-size:12px;}
+  .diff-neg{color:var(--accent);font-family:'DM Mono',monospace;font-size:12px;}
+  .diff-ok{color:var(--text2);font-family:'DM Mono',monospace;font-size:12px;}
+
+  /* PROYECTOS CARDS */
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+  .project-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;transition:border-color .2s;}
+  .project-card:hover{border-color:var(--accent2);}
+  .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .card-title-text{font-size:14px;font-weight:600;}
+  .card-client{font-size:12px;color:var(--text2);}
+  .card-badges{display:flex;flex-direction:column;gap:4px;align-items:flex-end;}
+  .card-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;}
+  .info-item .info-label{font-size:11px;color:var(--text2);}
+  .info-item .info-value{font-size:12px;font-weight:500;font-family:'DM Mono',monospace;}
+  .card-ings{margin:8px 0;padding:8px;background:var(--surface2);border-radius:8px;}
+  .ing-label{font-size:10px;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+  .ing-chips{display:flex;flex-wrap:wrap;gap:4px;}
+  .ing-chip{font-size:11px;padding:2px 8px;background:rgba(129,140,248,.15);color:var(--accent2);border-radius:20px;}
+  .card-actions{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+
+  /* ACTIVIDADES */
+  .horas-grid{display:flex;gap:8px;}
+  .hora-item{text-align:center;}
+  .hora-label{font-size:10px;color:var(--text2);display:block;}
+  .hora-val{font-size:12px;font-weight:500;font-family:'DM Mono',monospace;}
+  .hora-val.p{color:var(--accent);}
+  .hora-val.m{color:var(--warning);}
+  .hora-val.g{color:var(--danger);}
+  .horas-section{background:var(--surface2);border-radius:8px;padding:12px;margin-top:4px;}
+  .horas-section-title{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;}
+  .horas-inputs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">Ing<span>Control</span> · <span>Ingenieros</span></div>
-  <button class="btn btn-primary" onclick="abrirModal()">+ Nuevo ingeniero</button>
-</header>
-<div class="container">
-  <div class="page-title">Gestión de ingenieros</div>
-  <div class="page-sub">Administra el equipo del departamento de ingeniería</div>
-  <div class="stats">
-    <div class="stat-card"><div class="stat-label">Total ingenieros</div><div class="stat-value green" id="stat-total">—</div></div>
-    <div class="stat-card"><div class="stat-label">Horas contrato/mes</div><div class="stat-value purple" id="stat-horas">—</div></div>
-    <div class="stat-card"><div class="stat-label">Costo promedio/hora</div><div class="stat-value" id="stat-costo">—</div></div>
-  </div>
-  <div class="toolbar">
-    <div class="search-wrap">
-      <span class="search-icon">⌕</span>
-      <input type="text" id="buscar" placeholder="Buscar ingeniero..." oninput="filtrar()">
-    </div>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Ingeniero</th><th>Cargo</th><th>Horas/día</th><th>Costo/hora</th><th>Estado</th><th>Acciones</th></tr></thead>
-      <tbody id="tabla-body"><tr><td colspan="6" class="loading"><span class="spinner"></span>Cargando...</td></tr></tbody>
-    </table>
-  </div>
-</div>
 
-<div class="modal-overlay" id="modal">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-text">IngControl</div>
+    <div class="sidebar-logo-sub">Gestión de ingeniería</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="navTo('dashboard')">
+      <span class="nav-icon">▤</span> Dashboard
+    </div>
+    <div class="nav-section">Gestión</div>
+    <div class="nav-item" onclick="navTo('ingenieros')">
+      <span class="nav-icon">◎</span> Ingenieros
+    </div>
+    <div class="nav-item" onclick="navTo('proyectos')">
+      <span class="nav-icon">◫</span> Proyectos
+    </div>
+    <div class="nav-item" onclick="navTo('actividades')">
+      <span class="nav-icon">◈</span> Actividades
+    </div>
+    <div class="nav-section">Operación</div>
+    <div class="nav-item" onclick="navTo('registro')">
+      <span class="nav-icon">◷</span> Registro de tiempo
+    </div>
+  </nav>
+  <div class="sidebar-footer">v1.0 · Herrajas Andina</div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-sub" id="topbar-sub">Métricas del departamento de ingeniería</div>
+    </div>
+    <div id="topbar-action"></div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Ingenieros activos</div><div class="stat-value green" id="s-ingenieros">—</div></div>
+        <div class="stat-card"><div class="stat-label">Proyectos activos</div><div class="stat-value purple" id="s-proyectos">—</div></div>
+        <div class="stat-card"><div class="stat-label">Horas este mes</div><div class="stat-value green" id="s-horas-mes">—</div></div>
+        <div class="stat-card"><div class="stat-label">Registros hoy</div><div class="stat-value yellow" id="s-hoy">—</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Horas por departamento solicitante</div>
+          <div id="dept-bars"><div class="loading-text"><span class="spinner"></span>Cargando...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Carga laboral por ingeniero</div>
+          <div id="ing-list-dash"><div class="loading-text"><span class="spinner"></span>Cargando...</div></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Horas por actividad</div>
+          <div id="act-bars"><div class="loading-text"><span class="spinner"></span>Cargando...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Proyectado vs real</div>
+          <div class="table-wrap" style="border:none;">
+            <table>
+              <thead><tr><th>Proyecto</th><th>Proyectado</th><th>Real</th><th>Desviación</th></tr></thead>
+              <tbody id="tabla-proyectado"><tr><td colspan="4" class="loading-text"><span class="spinner"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INGENIEROS -->
+    <div id="page-ingenieros" class="page">
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-label">Total ingenieros</div><div class="stat-value green" id="ing-stat-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Horas contrato/mes</div><div class="stat-value purple" id="ing-stat-horas">—</div></div>
+        <div class="stat-card"><div class="stat-label">Costo promedio/hora</div><div class="stat-value" id="ing-stat-costo">—</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-wrap"><span class="search-icon">⌕</span><input type="text" id="ing-buscar" placeholder="Buscar ingeniero..." oninput="ingFiltrar()"></div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ingeniero</th><th>Cargo</th><th>Horas/día</th><th>Costo/hora</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="ing-tabla"><tr><td colspan="6" class="loading-text"><span class="spinner"></span>Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PROYECTOS -->
+    <div id="page-proyectos" class="page">
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value green" id="proy-stat-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">En curso</div><div class="stat-value purple" id="proy-stat-curso">—</div></div>
+        <div class="stat-card"><div class="stat-label">Cotización</div><div class="stat-value yellow" id="proy-stat-cot">—</div></div>
+        <div class="stat-card"><div class="stat-label">Completados</div><div class="stat-value green" id="proy-stat-comp">—</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-wrap"><span class="search-icon">⌕</span><input type="text" id="proy-buscar" placeholder="Buscar proyecto..." oninput="proyFiltrar()"></div>
+          <select class="filter" id="proy-filtro-estado" onchange="proyFiltrar()">
+            <option value="">Todos los estados</option>
+            <option value="cotizacion">Cotización</option>
+            <option value="en_curso">En curso</option>
+            <option value="pausado">Pausado</option>
+            <option value="completado">Completado</option>
+          </select>
+          <select class="filter" id="proy-filtro-dept" onchange="proyFiltrar()">
+            <option value="">Todos los departamentos</option>
+            <option value="comercial">Comercial</option>
+            <option value="ingenieria">Ingeniería</option>
+            <option value="fabricacion">Fabricación</option>
+          </select>
+        </div>
+      </div>
+      <div class="cards-grid" id="proy-cards"><div class="loading-text" style="grid-column:1/-1;"><span class="spinner"></span>Cargando...</div></div>
+    </div>
+
+    <!-- ACTIVIDADES -->
+    <div id="page-actividades" class="page">
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-label">Total actividades</div><div class="stat-value green" id="act-stat-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Genéricas</div><div class="stat-value purple" id="act-stat-gen">—</div></div>
+        <div class="stat-card"><div class="stat-label">Específicas</div><div class="stat-value yellow" id="act-stat-esp">—</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-wrap"><span class="search-icon">⌕</span><input type="text" id="act-buscar" placeholder="Buscar actividad..." oninput="actFiltrar()"></div>
+          <select class="filter" id="act-filtro-comp" onchange="actFiltrar()">
+            <option value="">Toda complejidad</option>
+            <option value="baja">Baja</option>
+            <option value="media">Media</option>
+            <option value="alta">Alta</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Actividad</th><th>Tipo</th><th>Complejidad</th><th>Pequeño</th><th>Mediano</th><th>Grande</th><th>Proyecto</th><th>Acciones</th></tr></thead>
+          <tbody id="act-tabla"><tr><td colspan="8" class="loading-text"><span class="spinner"></span>Cargando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REGISTRO -->
+    <div id="page-registro" class="page">
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="stat-card"><div class="stat-label">Horas hoy</div><div class="stat-value green" id="reg-stat-hoy">—</div></div>
+        <div class="stat-card"><div class="stat-label">Horas semana</div><div class="stat-value purple" id="reg-stat-semana">—</div></div>
+        <div class="stat-card"><div class="stat-label">Registros mes</div><div class="stat-value yellow" id="reg-stat-mes">—</div></div>
+      </div>
+      <div class="reg-layout">
+        <div class="form-card">
+          <div class="form-card-title">Nueva entrada</div>
+          <div class="form-group" style="margin-bottom:12px;"><label>Ingeniero <span class="required">*</span></label><select id="reg-ingeniero"><option value="">Seleccionar...</option></select></div>
+          <div class="form-group" style="margin-bottom:12px;"><label>Fecha <span class="required">*</span></label><input type="date" id="reg-fecha"></div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Tipo <span class="required">*</span></label>
+            <div class="tipo-tabs">
+              <button class="tipo-tab active" onclick="regSetTipo('proyecto',this)">Proyecto</button>
+              <button class="tipo-tab" onclick="regSetTipo('reunion',this)">Reunión</button>
+              <button class="tipo-tab" onclick="regSetTipo('capacitacion',this)">Capac.</button>
+              <button class="tipo-tab" onclick="regSetTipo('administrativo',this)">Admin</button>
+            </div>
+          </div>
+          <div id="reg-grupo-proyecto">
+            <div class="form-group" style="margin-bottom:12px;"><label>Proyecto</label><select id="reg-proyecto" onchange="regCargarActividades()"><option value="">Seleccionar...</option></select></div>
+            <div class="form-group" style="margin-bottom:12px;"><label>Actividad</label><select id="reg-actividad" onchange="regMostrarHint()"><option value="">Seleccionar...</option></select><div class="horas-hint" id="reg-hint"></div></div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;"><label>Horas reales <span class="required">*</span></label><input type="number" id="reg-horas" placeholder="0.5" min="0.5" step="0.5"></div>
+          <div class="form-group" style="margin-bottom:16px;"><label>Notas</label><textarea id="reg-notas" placeholder="Opcional..." rows="2"></textarea></div>
+          <button class="btn btn-primary" style="width:100%;" onclick="regGuardar()">Registrar tiempo</button>
+        </div>
+        <div>
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <div class="search-wrap"><span class="search-icon">⌕</span><input type="text" id="reg-buscar" placeholder="Buscar..." oninput="regFiltrar()"></div>
+              <select class="filter" id="reg-filtro-ing" onchange="regFiltrar()"><option value="">Todos los ingenieros</option></select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>Ingeniero</th><th>Tipo</th><th>Proyecto/Actividad</th><th>Real</th><th>Estándar</th><th>Dif.</th><th></th></tr></thead>
+              <tbody id="reg-tabla"><tr><td colspan="8" class="loading-text"><span class="spinner"></span></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODALES -->
+<!-- Modal Ingeniero -->
+<div class="modal-overlay" id="modal-ing">
   <div class="modal">
-    <div class="modal-title" id="modal-title">Nuevo ingeniero</div>
+    <div class="modal-title" id="modal-ing-title">Nuevo ingeniero</div>
     <div class="form-grid">
-      <div class="form-group"><label>Nombre</label><input type="text" id="f-nombre" placeholder="Juan"></div>
-      <div class="form-group"><label>Apellido</label><input type="text" id="f-apellido" placeholder="Pérez"></div>
-      <div class="form-group full"><label>Email</label><input type="email" id="f-email" placeholder="juan@empresa.com"></div>
-      <div class="form-group full">
-        <label>Cargo</label>
-        <select id="f-cargo">
-          <option value="">Seleccionar cargo...</option>
+      <div class="form-group"><label>Nombre <span class="required">*</span></label><input type="text" id="ing-f-nombre"></div>
+      <div class="form-group"><label>Apellido <span class="required">*</span></label><input type="text" id="ing-f-apellido"></div>
+      <div class="form-group full"><label>Email <span class="required">*</span></label><input type="email" id="ing-f-email"></div>
+      <div class="form-group full"><label>Cargo</label>
+        <select id="ing-f-cargo">
+          <option value="">Seleccionar...</option>
           <option value="Director de ingeniería">Director de ingeniería</option>
           <option value="Coordinador de ingeniería">Coordinador de ingeniería</option>
           <option value="Ingeniero 1">Ingeniero 1</option>
@@ -119,121 +406,140 @@
           <option value="Dibujante">Dibujante</option>
         </select>
       </div>
-      <div class="form-group"><label>Horas/día contrato</label><input type="number" id="f-horas" value="8.75" step="0.25" min="1" max="12"></div>
-      <div class="form-group"><label>Costo por hora ($)</label><input type="number" id="f-costo" placeholder="50000" min="0"></div>
-      <div class="form-group"><label>Fecha ingreso</label><input type="date" id="f-fecha"></div>
+      <div class="form-group"><label>Horas/día</label><input type="number" id="ing-f-horas" value="8.75" step="0.25"></div>
+      <div class="form-group"><label>Costo/hora ($)</label><input type="number" id="ing-f-costo" min="0"></div>
+      <div class="form-group"><label>Fecha ingreso</label><input type="date" id="ing-f-fecha"></div>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardar()">Guardar</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-ing')">Cancelar</button>
+      <button class="btn btn-primary" onclick="ingGuardar()">Guardar</button>
     </div>
   </div>
 </div>
+
+<!-- Modal Proyecto -->
+<div class="modal-overlay" id="modal-proy">
+  <div class="modal">
+    <div class="modal-title" id="modal-proy-title">Nuevo proyecto</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre <span class="required">*</span></label><input type="text" id="proy-f-nombre"></div>
+      <div class="form-group"><label>Departamento <span class="required">*</span></label>
+        <select id="proy-f-dept">
+          <option value="">Seleccionar...</option>
+          <option value="comercial">Comercial</option>
+          <option value="ingenieria">Ingeniería propia</option>
+          <option value="fabricacion">Fabricación</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Complejidad <span class="required">*</span></label>
+        <select id="proy-f-comp">
+          <option value="">Seleccionar...</option>
+          <option value="pequeño">Pequeño</option>
+          <option value="mediano">Mediano</option>
+          <option value="grande">Grande</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Estado</label>
+        <select id="proy-f-estado">
+          <option value="cotizacion">Cotización</option>
+          <option value="en_curso">En curso</option>
+          <option value="pausado">Pausado</option>
+          <option value="completado">Completado</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Valor estimado ($)</label><input type="number" id="proy-f-valor" min="0"></div>
+      <div class="form-group"><label>Fecha inicio</label><input type="date" id="proy-f-inicio"></div>
+      <div class="form-group"><label>Fecha fin est.</label><input type="date" id="proy-f-fin"></div>
+      <div class="form-group full"><label>Descripción</label><textarea id="proy-f-desc"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-proy')">Cancelar</button>
+      <button class="btn btn-primary" onclick="proyGuardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Asignar -->
+<div class="modal-overlay" id="modal-assign">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-title">Asignar ingenieros</div>
+    <div style="font-size:14px;padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:16px;" id="assign-proy-nombre"></div>
+    <label style="margin-bottom:8px;display:block;">Selecciona ingenieros</label>
+    <div id="assign-ing-list" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-assign')">Cancelar</button>
+      <button class="btn btn-primary" onclick="proyAsignar()">Asignar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Actividad -->
+<div class="modal-overlay" id="modal-act">
+  <div class="modal">
+    <div class="modal-title" id="modal-act-title">Nueva actividad</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre <span class="required">*</span></label><input type="text" id="act-f-nombre"></div>
+      <div class="form-group"><label>Complejidad <span class="required">*</span></label>
+        <select id="act-f-comp">
+          <option value="">Seleccionar...</option>
+          <option value="baja">Baja</option>
+          <option value="media">Media</option>
+          <option value="alta">Alta</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Tipo</label>
+        <select id="act-f-tipo" onchange="actToggleProy()">
+          <option value="generica">Genérica</option>
+          <option value="especifica">Específica</option>
+        </select>
+      </div>
+      <div class="form-group full" id="act-grupo-proy" style="display:none;"><label>Proyecto</label><select id="act-f-proy"><option value="">Seleccionar...</option></select></div>
+      <div class="form-group full"><label>Descripción</label><input type="text" id="act-f-desc"></div>
+      <div class="form-group full">
+        <div class="horas-section">
+          <div class="horas-section-title">Horas estándar por tamaño</div>
+          <div class="horas-inputs">
+            <div class="form-group"><label>Pequeño</label><input type="number" id="act-f-hp" step="0.5" min="0"></div>
+            <div class="form-group"><label>Mediano</label><input type="number" id="act-f-hm" step="0.5" min="0"></div>
+            <div class="form-group"><label>Grande</label><input type="number" id="act-f-hg" step="0.5" min="0"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-act')">Cancelar</button>
+      <button class="btn btn-primary" onclick="actGuardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'https://primary-production-420b7.up.railway.app/webhook/ingenieros';
-let ingenieros = [], editandoId = null;
-const colores = ['av-0','av-1','av-2','av-3','av-4'];
+// APIs
+const APIS = {
+  ing: 'https://primary-production-420b7.up.railway.app/webhook/ingenieros',
+  proy: 'https://primary-production-420b7.up.railway.app/webhook/proyectos',
+  act: 'https://primary-production-420b7.up.railway.app/webhook/actividades',
+  reg: 'https://primary-production-420b7.up.railway.app/webhook/registro-tiempo',
+  dash: 'https://primary-production-420b7.up.railway.app/webhook/dashboard'
+};
 
-async function llamarAPI(accion, datos={}) {
-  const res = await fetch(API, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({accion,...datos})
-  });
+// State
+let state = { ingenieros:[], proyectos:[], actividades:[], registros:[], regTipo:'proyecto', ingEditId:null, proyEditId:null, actEditId:null, proyAsignId:null };
+
+// Utils
+async function api(url, accion, datos={}) {
+  const res = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion,...datos})});
   if(!res.ok) throw new Error('Error '+res.status);
   return res.json();
 }
-
-function iniciales(n,a){return((n||'')[0]||'')+((a||'')[0]||'');}
-function formatCOP(n){return '$'+Number(n||0).toLocaleString('es-CO');}
-
-async function cargar(){
-  try{
-    const data = await llamarAPI('listar');
-    ingenieros = Array.isArray(data)?data:(data.data?[].concat(data.data):[]);
-    renderTabla(ingenieros);
-    actualizarStats();
-  }catch(e){
-    document.getElementById('tabla-body').innerHTML='<tr><td colspan="6" class="empty">Error al conectar. Verifica que N8N esté activo.</td></tr>';
-  }
-}
-
-function actualizarStats(){
-  const a=ingenieros.filter(i=>i.activo==1);
-  document.getElementById('stat-total').textContent=a.length;
-  document.getElementById('stat-horas').textContent=Math.round(a.reduce((s,i)=>s+(parseFloat(i.horas_contrato)||8.75)*22,0))+'h';
-  const p=a.length?a.reduce((s,i)=>s+(parseFloat(i.costo_hora)||0),0)/a.length:0;
-  document.getElementById('stat-costo').textContent=formatCOP(Math.round(p));
-}
-
-function renderTabla(lista){
-  const tbody=document.getElementById('tabla-body');
-  const a=lista.filter(i=>i.activo==1);
-  if(!a.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No hay ingenieros. Crea el primero.</td></tr>';return;}
-  tbody.innerHTML=a.map((ing,idx)=>`
-    <tr>
-      <td><div class="name-cell"><div class="avatar ${colores[idx%5]}">${iniciales(ing.nombre,ing.apellido)}</div><div><div class="name-text">${ing.nombre} ${ing.apellido}</div><div class="email-text">${ing.email}</div></div></div></td>
-      <td>${ing.cargo||'—'}</td>
-      <td class="mono">${ing.horas_contrato||8.75}h</td>
-      <td class="mono">${formatCOP(ing.costo_hora||0)}</td>
-      <td><span class="badge badge-active">Activo</span></td>
-      <td><div class="actions"><button class="btn btn-edit" onclick="editar(${ing.id})">Editar</button><button class="btn btn-danger" onclick="eliminar(${ing.id})">Eliminar</button></div></td>
-    </tr>`).join('');
-}
-
-function filtrar(){
-  const q=document.getElementById('buscar').value.toLowerCase();
-  renderTabla(ingenieros.filter(i=>(i.nombre+' '+i.apellido+' '+(i.cargo||'')+' '+i.email).toLowerCase().includes(q)));
-}
-
-function abrirModal(id=null){
-  editandoId=id;
-  document.getElementById('modal-title').textContent=id?'Editar ingeniero':'Nuevo ingeniero';
-  if(id){
-    const ing=ingenieros.find(i=>i.id==id);
-    document.getElementById('f-nombre').value=ing.nombre||'';
-    document.getElementById('f-apellido').value=ing.apellido||'';
-    document.getElementById('f-email').value=ing.email||'';
-    document.getElementById('f-cargo').value=ing.cargo||'';
-    document.getElementById('f-horas').value=ing.horas_contrato||8.75;
-    document.getElementById('f-costo').value=ing.costo_hora||'';
-    document.getElementById('f-fecha').value=ing.fecha_ingreso?ing.fecha_ingreso.split('T')[0]:'';
-  }else{
-    ['f-nombre','f-apellido','f-email','f-costo','f-fecha'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('f-cargo').value='';
-    document.getElementById('f-horas').value=8.75;
-  }
-  document.getElementById('modal').classList.add('open');
-}
-
-function cerrarModal(){document.getElementById('modal').classList.remove('open');editandoId=null;}
-function editar(id){abrirModal(id);}
-
-async function eliminar(id){
-  if(!confirm('¿Eliminar este ingeniero?'))return;
-  try{await llamarAPI('eliminar',{id});toast('Eliminado','success');cargar();}
-  catch(e){toast('Error al eliminar','error');}
-}
-
-async function guardar(){
-  const datos={
-    nombre:document.getElementById('f-nombre').value.trim(),
-    apellido:document.getElementById('f-apellido').value.trim(),
-    email:document.getElementById('f-email').value.trim(),
-    cargo:document.getElementById('f-cargo').value,
-    horas_contrato:parseFloat(document.getElementById('f-horas').value),
-    costo_hora:parseFloat(document.getElementById('f-costo').value)||0,
-    fecha_ingreso:document.getElementById('f-fecha').value||null
-  };
-  if(!datos.nombre||!datos.apellido||!datos.email){toast('Nombre, apellido y email son obligatorios','error');return;}
-  try{
-    if(editandoId){await llamarAPI('actualizar',{id:editandoId,...datos});toast('Actualizado','success');}
-    else{await llamarAPI('crear',datos);toast('Ingeniero creado','success');}
-    cerrarModal();cargar();
-  }catch(e){toast('Error al guardar','error');}
-}
+function parse(d) { return Array.isArray(d)?d:(d.data?[].concat(d.data):[]);}
+function fCOP(n){return '$'+Number(n||0).toLocaleString('es-CO');}
+function fFecha(f){return f?f.split('T')[0]:'—';}
+const avC=['av-0','av-1','av-2','av-3','av-4'];
+const deptL={comercial:'Comercial',ingenieria:'Ingeniería',fabricacion:'Fabricación'};
+const estadoL={cotizacion:'Cotización',en_curso:'En curso',pausado:'Pausado',completado:'Completado',cancelado:'Cancelado'};
 
 function toast(msg,tipo='success'){
   const t=document.getElementById('toast');
@@ -241,9 +547,512 @@ function toast(msg,tipo='success'){
   t.className='toast show '+tipo;
   setTimeout(()=>t.className='toast',3000);
 }
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function openModal(id){document.getElementById(id).classList.add('open');}
 
-document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))cerrarModal();});
-cargar();
+// NAVIGATION
+const pages = {
+  dashboard:{title:'Dashboard',sub:'Métricas del departamento de ingeniería',action:''},
+  ingenieros:{title:'Ingenieros',sub:'Gestión del equipo',action:'<button class="btn btn-primary" onclick="ingAbrirModal()">+ Nuevo ingeniero</button>'},
+  proyectos:{title:'Proyectos',sub:'Control y asignación',action:'<button class="btn btn-primary" onclick="proyAbrirModal()">+ Nuevo proyecto</button>'},
+  actividades:{title:'Catálogo de actividades',sub:'Tiempos estándar por complejidad',action:'<button class="btn btn-primary" onclick="actAbrirModal()">+ Nueva actividad</button>'},
+  registro:{title:'Registro de tiempo',sub:'Registro diario de horas',action:''}
+};
+
+function navTo(page) {
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  document.querySelector(`.nav-item[onclick="navTo('${page}')"]`).classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('topbar-title').textContent = pages[page].title;
+  document.getElementById('topbar-sub').textContent = pages[page].sub;
+  document.getElementById('topbar-action').innerHTML = pages[page].action;
+  loadPage(page);
+}
+
+async function loadPage(page) {
+  if(page==='dashboard') await loadDashboard();
+  else if(page==='ingenieros') await loadIngenieros();
+  else if(page==='proyectos') await loadProyectos();
+  else if(page==='actividades') await loadActividades();
+  else if(page==='registro') await loadRegistro();
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard() {
+  try {
+    const [resumen, dept, ings, acts, proyVsReal] = await Promise.all([
+      api(APIS.dash,'resumen_general'),
+      api(APIS.dash,'horas_por_departamento',{mes:new Date().getMonth()+1,anio:new Date().getFullYear()}),
+      api(APIS.dash,'carga_ingenieros'),
+      api(APIS.dash,'horas_por_actividad'),
+      api(APIS.dash,'proyectado_vs_real')
+    ]);
+    const r=parse(resumen)[0]||{};
+    document.getElementById('s-ingenieros').textContent=r.total_ingenieros||0;
+    document.getElementById('s-proyectos').textContent=r.proyectos_activos||0;
+    document.getElementById('s-horas-mes').textContent=(r.horas_mes_actual||0)+'h';
+    document.getElementById('s-hoy').textContent=r.registros_hoy||0;
+    renderDeptBars(parse(dept));
+    renderIngsDash(parse(ings));
+    renderActBars(parse(acts));
+    renderProyVsReal(parse(proyVsReal));
+  } catch(e){}
+}
+
+function renderDeptBars(data) {
+  const c=document.getElementById('dept-bars');
+  if(!data.length){c.innerHTML='<div class="loading-text">Sin datos</div>';return;}
+  const max=Math.max(...data.map(d=>parseFloat(d.horas_totales)||0));
+  const cols={comercial:'#818cf8',ingenieria:'#6ee7b7',fabricacion:'#fbbf24',interno:'#8888a0'};
+  c.innerHTML=data.map(d=>{
+    const h=parseFloat(d.horas_totales)||0;
+    const pct=max?Math.round(h/max*100):0;
+    const col=cols[d.departamento]||'#8888a0';
+    return `<div class="bar-row"><div class="bar-label">${deptL[d.departamento]||d.departamento}</div><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${col};"></div></div><div class="bar-val" style="color:${col};">${h}h</div></div>`;
+  }).join('');
+}
+
+function renderIngsDash(data) {
+  const c=document.getElementById('ing-list-dash');
+  if(!data.length){c.innerHTML='<div class="loading-text">Sin datos</div>';return;}
+  const hDisp=8.75*22;
+  c.innerHTML=data.map((ing,idx)=>{
+    const ej=parseFloat(ing.horas_ejecutadas_mes)||0;
+    const pct=Math.min(Math.round(ej/hDisp*100),100);
+    const col=pct>90?'#f87171':pct>70?'#fbbf24':'#6ee7b7';
+    const ini=ing.ingeniero.split(' ').map(n=>n[0]).slice(0,2).join('');
+    return `<div class="ing-row-dash"><div class="avatar ${avC[idx%5]}" style="margin-right:0;">${ini}</div><div style="flex:1;margin-left:8px;"><div style="font-size:13px;font-weight:500;">${ing.ingeniero}</div><div style="font-size:11px;color:var(--text2);">${ing.cargo||'—'}</div></div><div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${col};"></div></div><div style="text-align:right;"><div style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:${col};">${ej}h</div><div style="font-size:11px;color:var(--text2);">${pct}%</div></div></div>`;
+  }).join('');
+}
+
+function renderActBars(data) {
+  const c=document.getElementById('act-bars');
+  if(!data.length){c.innerHTML='<div class="loading-text">Sin datos</div>';return;}
+  const max=Math.max(...data.map(d=>parseFloat(d.horas_reales)||0));
+  c.innerHTML=data.map(d=>{
+    const h=parseFloat(d.horas_reales)||0;
+    const pct=max?Math.round(h/max*100):0;
+    return `<div class="bar-row"><div class="bar-label" title="${d.actividad}">${d.actividad}</div><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:var(--accent2);"></div></div><div class="bar-val" style="color:var(--accent2);">${h}h</div></div>`;
+  }).join('');
+}
+
+function renderProyVsReal(data) {
+  const tb=document.getElementById('tabla-proyectado');
+  if(!data.length){tb.innerHTML='<tr><td colspan="4" class="loading-text">Sin datos</td></tr>';return;}
+  tb.innerHTML=data.map(p=>{
+    const desv=parseFloat(p.desviacion)||0;
+    const pctD=parseFloat(p.porcentaje_desviacion)||0;
+    const cls=desv>0?'diff-pos':desv<0?'diff-neg':'diff-ok';
+    const txt=desv>0?`+${desv}h`:desv<0?`${desv}h`:'0h';
+    return `<tr><td style="font-weight:500;font-size:12px;">${p.proyecto}</td><td class="mono">${p.horas_proyectadas||0}h</td><td class="mono">${p.horas_reales||0}h</td><td class="${cls}">${txt}</td></tr>`;
+  }).join('');
+}
+
+// ===== INGENIEROS =====
+async function loadIngenieros() {
+  try {
+    const data=await api(APIS.ing,'listar');
+    state.ingenieros=parse(data).filter(i=>i.activo==1);
+    ingRenderTabla(state.ingenieros);
+    document.getElementById('ing-stat-total').textContent=state.ingenieros.length;
+    const h=Math.round(state.ingenieros.reduce((s,i)=>s+(parseFloat(i.horas_contrato)||8.75)*22,0));
+    document.getElementById('ing-stat-horas').textContent=h+'h';
+    const p=state.ingenieros.length?state.ingenieros.reduce((s,i)=>s+(parseFloat(i.costo_hora)||0),0)/state.ingenieros.length:0;
+    document.getElementById('ing-stat-costo').textContent=fCOP(Math.round(p));
+  } catch(e){document.getElementById('ing-tabla').innerHTML='<tr><td colspan="6" class="empty">Error al cargar</td></tr>';}
+}
+
+function ingRenderTabla(lista) {
+  const tb=document.getElementById('ing-tabla');
+  if(!lista.length){tb.innerHTML='<tr><td colspan="6" class="empty">No hay ingenieros</td></tr>';return;}
+  tb.innerHTML=lista.map((ing,idx)=>`
+    <tr>
+      <td><div class="name-cell"><div class="avatar ${avC[idx%5]}">${(ing.nombre[0]||'')+(ing.apellido[0]||'')}</div><div><div style="font-weight:500;">${ing.nombre} ${ing.apellido}</div><div style="font-size:12px;color:var(--text2);">${ing.email}</div></div></div></td>
+      <td>${ing.cargo||'—'}</td>
+      <td class="mono">${ing.horas_contrato||8.75}h</td>
+      <td class="mono">${fCOP(ing.costo_hora||0)}</td>
+      <td><span class="badge badge-active">Activo</span></td>
+      <td><div style="display:flex;gap:6px;"><button class="btn btn-edit btn-sm" onclick="ingEditar(${ing.id})">Editar</button><button class="btn btn-danger btn-sm" onclick="ingEliminar(${ing.id})">Eliminar</button></div></td>
+    </tr>`).join('');
+}
+
+function ingFiltrar(){
+  const q=document.getElementById('ing-buscar').value.toLowerCase();
+  ingRenderTabla(state.ingenieros.filter(i=>(i.nombre+' '+i.apellido+' '+(i.cargo||'')+' '+i.email).toLowerCase().includes(q)));
+}
+
+function ingAbrirModal(id=null){
+  state.ingEditId=id;
+  document.getElementById('modal-ing-title').textContent=id?'Editar ingeniero':'Nuevo ingeniero';
+  if(id){
+    const i=state.ingenieros.find(x=>x.id==id);
+    document.getElementById('ing-f-nombre').value=i.nombre||'';
+    document.getElementById('ing-f-apellido').value=i.apellido||'';
+    document.getElementById('ing-f-email').value=i.email||'';
+    document.getElementById('ing-f-cargo').value=i.cargo||'';
+    document.getElementById('ing-f-horas').value=i.horas_contrato||8.75;
+    document.getElementById('ing-f-costo').value=i.costo_hora||'';
+    document.getElementById('ing-f-fecha').value=fFecha(i.fecha_ingreso);
+  } else {
+    ['ing-f-nombre','ing-f-apellido','ing-f-email','ing-f-costo','ing-f-fecha'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ing-f-cargo').value='';
+    document.getElementById('ing-f-horas').value=8.75;
+  }
+  openModal('modal-ing');
+}
+
+function ingEditar(id){ingAbrirModal(id);}
+
+async function ingEliminar(id){
+  if(!confirm('¿Eliminar este ingeniero?'))return;
+  try{await api(APIS.ing,'eliminar',{id});toast('Eliminado','success');loadIngenieros();}
+  catch(e){toast('Error','error');}
+}
+
+async function ingGuardar(){
+  const datos={nombre:document.getElementById('ing-f-nombre').value.trim(),apellido:document.getElementById('ing-f-apellido').value.trim(),email:document.getElementById('ing-f-email').value.trim(),cargo:document.getElementById('ing-f-cargo').value,horas_contrato:parseFloat(document.getElementById('ing-f-horas').value),costo_hora:parseFloat(document.getElementById('ing-f-costo').value)||0,fecha_ingreso:document.getElementById('ing-f-fecha').value||null};
+  if(!datos.nombre||!datos.apellido||!datos.email){toast('Nombre, apellido y email son obligatorios','error');return;}
+  try{
+    if(state.ingEditId){await api(APIS.ing,'actualizar',{id:state.ingEditId,...datos});toast('Actualizado','success');}
+    else{await api(APIS.ing,'crear',datos);toast('Creado','success');}
+    closeModal('modal-ing');loadIngenieros();
+  }catch(e){toast('Error al guardar','error');}
+}
+
+// ===== PROYECTOS =====
+async function loadProyectos() {
+  try {
+    const [dataP, dataI] = await Promise.all([api(APIS.proy,'listar'), api(APIS.ing,'listar')]);
+    state.proyectos=parse(dataP);
+    state.ingenieros=parse(dataI).filter(i=>i.activo==1);
+    proyRenderCards(state.proyectos);
+    document.getElementById('proy-stat-total').textContent=state.proyectos.length;
+    document.getElementById('proy-stat-curso').textContent=state.proyectos.filter(p=>p.estado==='en_curso').length;
+    document.getElementById('proy-stat-cot').textContent=state.proyectos.filter(p=>p.estado==='cotizacion').length;
+    document.getElementById('proy-stat-comp').textContent=state.proyectos.filter(p=>p.estado==='completado').length;
+  } catch(e){}
+}
+
+function proyRenderCards(lista) {
+  const g=document.getElementById('proy-cards');
+  if(!lista.length){g.innerHTML='<div class="empty" style="grid-column:1/-1;">No hay proyectos</div>';return;}
+  g.innerHTML=lista.map(p=>`
+    <div class="project-card">
+      <div class="card-header">
+        <div><div class="card-title-text">${p.nombre}</div><div class="card-client">${p.cliente_nombre||'Sin cliente'}</div></div>
+        <div class="card-badges"><span class="badge badge-${p.estado}">${estadoL[p.estado]||p.estado}</span><span class="badge badge-${p.departamento_solicitante}">${deptL[p.departamento_solicitante]||p.departamento_solicitante}</span>${p.complejidad?`<span class="badge badge-${p.complejidad}">${p.complejidad}</span>`:''}</div>
+      </div>
+      <div class="card-info">
+        <div class="info-item"><div class="info-label">Valor est.</div><div class="info-value">${fCOP(p.valor_estimado)}</div></div>
+        <div class="info-item"><div class="info-label">Inicio</div><div class="info-value">${fFecha(p.fecha_inicio)}</div></div>
+      </div>
+      <div class="card-ings">
+        <div class="ing-label">Ingenieros</div>
+        <div class="ing-chips">${p.ingenieros_asignados?p.ingenieros_asignados.split(', ').map(n=>`<span class="ing-chip">${n}</span>`).join(''):'<span style="font-size:11px;color:var(--text2);">Sin asignar</span>'}</div>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-edit btn-sm" onclick="proyEditar(${p.id})">Editar</button>
+        <button class="btn btn-assign btn-sm" onclick="proyAbrirAssign(${p.id},'${p.nombre.replace(/'/g,"\\'")}')">Asignar</button>
+        <button class="btn btn-danger btn-sm" onclick="proyEliminar(${p.id})">Cancelar</button>
+      </div>
+    </div>`).join('');
+}
+
+function proyFiltrar(){
+  const q=document.getElementById('proy-buscar').value.toLowerCase();
+  const e=document.getElementById('proy-filtro-estado').value;
+  const d=document.getElementById('proy-filtro-dept').value;
+  proyRenderCards(state.proyectos.filter(p=>{
+    const mQ=(p.nombre+' '+(p.cliente_nombre||'')+(p.descripcion||'')).toLowerCase().includes(q);
+    const mE=!e||p.estado===e;
+    const mD=!d||p.departamento_solicitante===d;
+    return mQ&&mE&&mD;
+  }));
+}
+
+function proyAbrirModal(id=null){
+  state.proyEditId=id;
+  document.getElementById('modal-proy-title').textContent=id?'Editar proyecto':'Nuevo proyecto';
+  if(id){
+    const p=state.proyectos.find(x=>x.id==id);
+    document.getElementById('proy-f-nombre').value=p.nombre||'';
+    document.getElementById('proy-f-dept').value=p.departamento_solicitante||'';
+    document.getElementById('proy-f-comp').value=p.complejidad||'';
+    document.getElementById('proy-f-estado').value=p.estado||'cotizacion';
+    document.getElementById('proy-f-valor').value=p.valor_estimado||'';
+    document.getElementById('proy-f-inicio').value=fFecha(p.fecha_inicio);
+    document.getElementById('proy-f-fin').value=fFecha(p.fecha_fin_estimada);
+    document.getElementById('proy-f-desc').value=p.descripcion||'';
+  } else {
+    ['proy-f-nombre','proy-f-valor','proy-f-inicio','proy-f-fin','proy-f-desc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('proy-f-dept').value='';
+    document.getElementById('proy-f-comp').value='';
+    document.getElementById('proy-f-estado').value='cotizacion';
+  }
+  openModal('modal-proy');
+}
+
+function proyEditar(id){proyAbrirModal(id);}
+
+async function proyEliminar(id){
+  if(!confirm('¿Cancelar este proyecto?'))return;
+  try{await api(APIS.proy,'eliminar',{id});toast('Cancelado','success');loadProyectos();}
+  catch(e){toast('Error','error');}
+}
+
+async function proyGuardar(){
+  const datos={nombre:document.getElementById('proy-f-nombre').value.trim(),departamento_solicitante:document.getElementById('proy-f-dept').value,complejidad:document.getElementById('proy-f-comp').value,estado:document.getElementById('proy-f-estado').value,valor_estimado:parseFloat(document.getElementById('proy-f-valor').value)||0,fecha_inicio:document.getElementById('proy-f-inicio').value||null,fecha_fin_estimada:document.getElementById('proy-f-fin').value||null,descripcion:document.getElementById('proy-f-desc').value.trim()};
+  if(!datos.nombre){toast('El nombre es obligatorio','error');return;}
+  if(!datos.departamento_solicitante){toast('Selecciona el departamento','error');return;}
+  if(!datos.complejidad){toast('Selecciona la complejidad','error');return;}
+  try{
+    if(state.proyEditId){await api(APIS.proy,'actualizar',{id:state.proyEditId,...datos});toast('Actualizado','success');}
+    else{await api(APIS.proy,'crear',datos);toast('Creado','success');}
+    closeModal('modal-proy');loadProyectos();
+  }catch(e){toast('Error al guardar','error');}
+}
+
+function proyAbrirAssign(id,nombre){
+  state.proyAsignId=id;
+  document.getElementById('assign-proy-nombre').textContent=nombre;
+  document.getElementById('assign-ing-list').innerHTML=state.ingenieros.map(i=>`
+    <label style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface2);border-radius:8px;cursor:pointer;">
+      <input type="checkbox" value="${i.id}" style="width:16px;height:16px;">
+      <div><div style="font-size:14px;font-weight:500;">${i.nombre} ${i.apellido}</div><div style="font-size:12px;color:var(--text2);">${i.cargo||''}</div></div>
+    </label>`).join('');
+  openModal('modal-assign');
+}
+
+async function proyAsignar(){
+  const checks=document.querySelectorAll('#assign-ing-list input:checked');
+  if(!checks.length){toast('Selecciona al menos un ingeniero','error');return;}
+  try{
+    for(const c of checks) await api(APIS.proy,'asignar',{proyecto_id:state.proyAsignId,ingeniero_id:parseInt(c.value)});
+    toast('Ingenieros asignados','success');closeModal('modal-assign');loadProyectos();
+  }catch(e){toast('Error al asignar','error');}
+}
+
+// ===== ACTIVIDADES =====
+async function loadActividades() {
+  try {
+    const [dataA,dataP]=await Promise.all([api(APIS.act,'listar'),api(APIS.proy,'listar')]);
+    state.actividades=parse(dataA);
+    state.proyectos=parse(dataP);
+    const selP=document.getElementById('act-f-proy');
+    selP.innerHTML='<option value="">Seleccionar...</option>'+state.proyectos.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+    actRenderTabla(state.actividades);
+    document.getElementById('act-stat-total').textContent=state.actividades.length;
+    document.getElementById('act-stat-gen').textContent=state.actividades.filter(a=>!a.proyecto_id).length;
+    document.getElementById('act-stat-esp').textContent=state.actividades.filter(a=>a.proyecto_id).length;
+  }catch(e){}
+}
+
+function actRenderTabla(lista){
+  const tb=document.getElementById('act-tabla');
+  if(!lista.length){tb.innerHTML='<tr><td colspan="8" class="empty">No hay actividades</td></tr>';return;}
+  tb.innerHTML=lista.map(a=>`
+    <tr>
+      <td><div style="font-weight:500;">${a.nombre}</div>${a.descripcion?`<div style="font-size:11px;color:var(--text2);">${a.descripcion}</div>`:''}</td>
+      <td><span class="badge badge-${a.proyecto_id?'especifica':'generica'}">${a.proyecto_id?'Específica':'Genérica'}</span></td>
+      <td><span class="badge badge-${a.complejidad}">${a.complejidad}</span></td>
+      <td class="mono" style="color:var(--accent);">${a['horas_pequeño']||'—'}h</td>
+      <td class="mono" style="color:var(--warning);">${a.horas_mediano||'—'}h</td>
+      <td class="mono" style="color:var(--danger);">${a.horas_grande||'—'}h</td>
+      <td style="font-size:12px;color:var(--text2);">${a.proyecto_nombre||'—'}</td>
+      <td><div style="display:flex;gap:6px;"><button class="btn btn-edit btn-sm" onclick="actEditar(${a.id})">Editar</button><button class="btn btn-danger btn-sm" onclick="actEliminar(${a.id})">Elim.</button></div></td>
+    </tr>`).join('');
+}
+
+function actFiltrar(){
+  const q=document.getElementById('act-buscar').value.toLowerCase();
+  const c=document.getElementById('act-filtro-comp').value;
+  actRenderTabla(state.actividades.filter(a=>(a.nombre+(a.descripcion||'')).toLowerCase().includes(q)&&(!c||a.complejidad===c)));
+}
+
+function actToggleProy(){
+  document.getElementById('act-grupo-proy').style.display=document.getElementById('act-f-tipo').value==='especifica'?'flex':'none';
+}
+
+function actAbrirModal(id=null){
+  state.actEditId=id;
+  document.getElementById('modal-act-title').textContent=id?'Editar actividad':'Nueva actividad';
+  if(id){
+    const a=state.actividades.find(x=>x.id==id);
+    document.getElementById('act-f-nombre').value=a.nombre||'';
+    document.getElementById('act-f-comp').value=a.complejidad||'';
+    document.getElementById('act-f-tipo').value=a.proyecto_id?'especifica':'generica';
+    document.getElementById('act-f-proy').value=a.proyecto_id||'';
+    document.getElementById('act-f-desc').value=a.descripcion||'';
+    document.getElementById('act-f-hp').value=a['horas_pequeño']||'';
+    document.getElementById('act-f-hm').value=a.horas_mediano||'';
+    document.getElementById('act-f-hg').value=a.horas_grande||'';
+    actToggleProy();
+  } else {
+    ['act-f-nombre','act-f-desc','act-f-hp','act-f-hm','act-f-hg'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('act-f-comp').value='';
+    document.getElementById('act-f-tipo').value='generica';
+    document.getElementById('act-grupo-proy').style.display='none';
+  }
+  openModal('modal-act');
+}
+
+function actEditar(id){actAbrirModal(id);}
+
+async function actEliminar(id){
+  if(!confirm('¿Eliminar esta actividad?'))return;
+  try{await api(APIS.act,'eliminar',{id});toast('Eliminada','success');loadActividades();}
+  catch(e){toast('Error','error');}
+}
+
+async function actGuardar(){
+  const tipo=document.getElementById('act-f-tipo').value;
+  const datos={nombre:document.getElementById('act-f-nombre').value.trim(),complejidad:document.getElementById('act-f-comp').value,descripcion:document.getElementById('act-f-desc').value.trim(),proyecto_id:tipo==='especifica'?(document.getElementById('act-f-proy').value||null):null,horas_pequeño:parseFloat(document.getElementById('act-f-hp').value)||null,horas_mediano:parseFloat(document.getElementById('act-f-hm').value)||null,horas_grande:parseFloat(document.getElementById('act-f-hg').value)||null,tiempo_estandar_horas:parseFloat(document.getElementById('act-f-hm').value)||0};
+  if(!datos.nombre){toast('El nombre es obligatorio','error');return;}
+  if(!datos.complejidad){toast('Selecciona la complejidad','error');return;}
+  try{
+    if(state.actEditId){await api(APIS.act,'actualizar',{id:state.actEditId,...datos});toast('Actualizada','success');}
+    else{await api(APIS.act,'crear',datos);toast('Creada','success');}
+    closeModal('modal-act');loadActividades();
+  }catch(e){toast('Error al guardar','error');}
+}
+
+// ===== REGISTRO =====
+async function loadRegistro() {
+  try {
+    const [dataR,dataI,dataP,dataA]=await Promise.all([
+      api(APIS.reg,'listar'),
+      api(APIS.ing,'listar'),
+      api(APIS.proy,'listar'),
+      api(APIS.act,'listar')
+    ]);
+    state.registros=parse(dataR);
+    state.ingenieros=parse(dataI).filter(i=>i.activo==1);
+    state.proyectos=parse(dataP);
+    state.actividades=parse(dataA);
+
+    const selI=document.getElementById('reg-ingeniero');
+    selI.innerHTML='<option value="">Seleccionar...</option>'+state.ingenieros.map(i=>`<option value="${i.id}">${i.nombre} ${i.apellido}</option>`).join('');
+    const selP=document.getElementById('reg-proyecto');
+    selP.innerHTML='<option value="">Seleccionar...</option>'+state.proyectos.map(p=>`<option value="${p.id}" data-comp="${p.complejidad||''}">${p.nombre}</option>`).join('');
+    const filtI=document.getElementById('reg-filtro-ing');
+    filtI.innerHTML='<option value="">Todos los ingenieros</option>'+state.ingenieros.map(i=>`<option value="${i.id}">${i.nombre} ${i.apellido}</option>`).join('');
+
+    regRenderTabla(state.registros);
+    regActualizarStats();
+  }catch(e){document.getElementById('reg-tabla').innerHTML='<tr><td colspan="8" class="empty">Error al cargar</td></tr>';}
+}
+
+function regActualizarStats(){
+  const hoy=new Date().toISOString().split('T')[0];
+  const sem=new Date(Date.now()-7*24*60*60*1000).toISOString().split('T')[0];
+  const mes=new Date().getMonth(),anio=new Date().getFullYear();
+  document.getElementById('reg-stat-hoy').textContent=state.registros.filter(r=>r.fecha?.startsWith(hoy)).reduce((s,r)=>s+parseFloat(r.horas_reales||0),0).toFixed(1)+'h';
+  document.getElementById('reg-stat-semana').textContent=state.registros.filter(r=>r.fecha>=sem).reduce((s,r)=>s+parseFloat(r.horas_reales||0),0).toFixed(1)+'h';
+  document.getElementById('reg-stat-mes').textContent=state.registros.filter(r=>{const d=new Date(r.fecha);return d.getMonth()===mes&&d.getFullYear()===anio;}).length;
+}
+
+function regCargarActividades(){
+  const pId=document.getElementById('reg-proyecto').value;
+  const sel=document.getElementById('reg-actividad');
+  sel.innerHTML='<option value="">Seleccionar actividad...</option>'+state.actividades.map(a=>`<option value="${a.id}" data-hp="${a['horas_pequeño']||''}" data-hm="${a.horas_mediano||''}" data-hg="${a.horas_grande||''}">${a.nombre}</option>`).join('');
+  document.getElementById('reg-hint').style.display='none';
+}
+
+function regMostrarHint(){
+  const aOpt=document.getElementById('reg-actividad').selectedOptions[0];
+  const pOpt=document.getElementById('reg-proyecto').selectedOptions[0];
+  if(!aOpt?.value||!pOpt?.value){document.getElementById('reg-hint').style.display='none';return;}
+  const comp=pOpt.getAttribute('data-comp');
+  let h=null;
+  if(comp==='pequeño')h=aOpt.getAttribute('data-hp');
+  else if(comp==='mediano')h=aOpt.getAttribute('data-hm');
+  else if(comp==='grande')h=aOpt.getAttribute('data-hg');
+  const hint=document.getElementById('reg-hint');
+  if(h){hint.textContent=`Tiempo estándar (${comp}): ${h}h`;hint.style.display='block';}
+  else hint.style.display='none';
+}
+
+function regSetTipo(tipo,btn){
+  state.regTipo=tipo;
+  document.querySelectorAll('.tipo-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('reg-grupo-proyecto').style.display=tipo==='proyecto'?'block':'none';
+}
+
+function regRenderTabla(lista){
+  const tb=document.getElementById('reg-tabla');
+  if(!lista.length){tb.innerHTML='<tr><td colspan="8" class="empty">No hay registros</td></tr>';return;}
+  const tL={proyecto:'Proyecto',reunion:'Reunión',capacitacion:'Capacitación',administrativo:'Administrativo',otro:'Otro'};
+  tb.innerHTML=lista.map(r=>{
+    const diff=r.diferencia!==null&&r.diferencia!==undefined?parseFloat(r.diferencia):null;
+    const dH=diff===null?'<span class="diff-ok">—</span>':diff>0?`<span class="diff-pos">+${diff}h</span>`:diff<0?`<span class="diff-neg">${diff}h</span>`:'<span class="diff-ok">0h</span>';
+    return `<tr>
+      <td class="mono">${r.fecha?.split('T')[0]||'—'}</td>
+      <td style="font-weight:500;font-size:13px;">${r.ingeniero_nombre||'—'}</td>
+      <td><span class="badge badge-${r.tipo}">${tL[r.tipo]||r.tipo}</span></td>
+      <td><div style="font-size:13px;">${r.proyecto_nombre||'—'}</div>${r.actividad_nombre?`<div style="font-size:11px;color:var(--text2);">${r.actividad_nombre}</div>`:''}</td>
+      <td class="mono" style="font-weight:500;">${parseFloat(r.horas_reales||0).toFixed(1)}h</td>
+      <td class="mono" style="color:var(--text2);">${r.horas_estandar?parseFloat(r.horas_estandar).toFixed(1)+'h':'—'}</td>
+      <td>${dH}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="regEliminar(${r.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function regFiltrar(){
+  const q=document.getElementById('reg-buscar').value.toLowerCase();
+  const ing=document.getElementById('reg-filtro-ing').value;
+  regRenderTabla(state.registros.filter(r=>{
+    const mQ=((r.ingeniero_nombre||'')+(r.proyecto_nombre||'')+(r.actividad_nombre||'')).toLowerCase().includes(q);
+    const mI=!ing||r.ingeniero_id==ing;
+    return mQ&&mI;
+  }));
+}
+
+async function regEliminar(id){
+  if(!confirm('¿Eliminar este registro?'))return;
+  try{await api(APIS.reg,'eliminar',{id});toast('Eliminado','success');loadRegistro();}
+  catch(e){toast('Error','error');}
+}
+
+async function regGuardar(){
+  const ingId=document.getElementById('reg-ingeniero').value;
+  const fecha=document.getElementById('reg-fecha').value;
+  const horas=parseFloat(document.getElementById('reg-horas').value);
+  if(!ingId){toast('Selecciona un ingeniero','error');return;}
+  if(!fecha){toast('Selecciona la fecha','error');return;}
+  if(!horas||horas<=0){toast('Ingresa las horas','error');return;}
+  if(state.regTipo==='proyecto'&&!document.getElementById('reg-proyecto').value){toast('Selecciona un proyecto','error');return;}
+
+  const pId=document.getElementById('reg-proyecto').value||null;
+  const aId=document.getElementById('reg-actividad').value||null;
+  let horasE=null;
+  if(aId&&pId){
+    const aOpt=document.getElementById('reg-actividad').selectedOptions[0];
+    const pOpt=document.getElementById('reg-proyecto').selectedOptions[0];
+    const comp=pOpt.getAttribute('data-comp');
+    if(comp==='pequeño')horasE=parseFloat(aOpt.getAttribute('data-hp'))||null;
+    else if(comp==='mediano')horasE=parseFloat(aOpt.getAttribute('data-hm'))||null;
+    else if(comp==='grande')horasE=parseFloat(aOpt.getAttribute('data-hg'))||null;
+  }
+  try{
+    await api(APIS.reg,'crear',{ingeniero_id:parseInt(ingId),fecha,tipo:state.regTipo,proyecto_id:pId?parseInt(pId):null,actividad_catalogo_id:aId?parseInt(aId):null,horas_reales:horas,horas_estandar:horasE,descripcion:document.getElementById('reg-notas').value.trim()});
+    toast('Tiempo registrado','success');
+    document.getElementById('reg-horas').value='';
+    document.getElementById('reg-notas').value='';
+    loadRegistro();
+  }catch(e){toast('Error al registrar','error');}
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// Set today
+document.getElementById('reg-fecha').value=new Date().toISOString().split('T')[0];
+
+// Load dashboard on start
+loadDashboard();
 </script>
 </body>
 </html>

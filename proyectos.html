@@ -163,6 +163,15 @@
         </select>
       </div>
       <div class="form-group">
+        <label>Complejidad del proyecto <span class="required">*</span></label>
+        <select id="f-complejidad">
+          <option value="">Seleccionar...</option>
+          <option value="pequeño">Pequeño</option>
+          <option value="mediano">Mediano</option>
+          <option value="grande">Grande</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>Estado <span class="required">*</span></label>
         <select id="f-estado">
           <option value="">Seleccionar...</option>
@@ -280,6 +289,7 @@ function renderCards(lista) {
         <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
           ${badgeEstado(p.estado)}
           ${badgeDept(p.departamento_solicitante)}
+          ${p.complejidad ? `<span class="badge" style="background:rgba(110,231,183,.1);color:var(--accent)">${p.complejidad}</span>` : ''}
         </div>
       </div>
       <div class="card-info">
@@ -332,6 +342,7 @@ function abrirModal(id=null) {
     const p = proyectos.find(x=>x.id==id);
     document.getElementById('f-nombre').value = p.nombre||'';
     document.getElementById('f-dept').value = p.departamento_solicitante||'comercial';
+    document.getElementById('f-complejidad').value = p.complejidad||'';
     document.getElementById('f-estado').value = p.estado||'cotizacion';
     document.getElementById('f-valor').value = p.valor_estimado||'';
     document.getElementById('f-inicio').value = formatFecha(p.fecha_inicio);
@@ -341,6 +352,7 @@ function abrirModal(id=null) {
     ['f-nombre','f-valor','f-inicio','f-fin','f-desc'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('f-dept').value='';
     document.getElementById('f-estado').value='';
+    document.getElementById('f-complejidad').value='';
   }
   document.getElementById('modal').classList.add('open');
 }
@@ -362,6 +374,7 @@ async function guardar() {
   const datos = {
     nombre: document.getElementById('f-nombre').value.trim(),
     departamento_solicitante: document.getElementById('f-dept').value,
+    complejidad: document.getElementById('f-complejidad').value,
     estado: document.getElementById('f-estado').value,
     valor_estimado: parseFloat(document.getElementById('f-valor').value)||0,
     fecha_inicio: document.getElementById('f-inicio').value||null,
@@ -370,6 +383,7 @@ async function guardar() {
   };
   if(!datos.nombre) { toast('El nombre es obligatorio','error'); return; }
   if(!datos.departamento_solicitante) { toast('Selecciona el departamento solicitante','error'); return; }
+  if(!datos.complejidad) { toast('Selecciona la complejidad del proyecto','error'); return; }
   if(!datos.estado) { toast('Selecciona el estado del proyecto','error'); return; }
   try {
     if(editandoId) {

@@ -230,13 +230,15 @@
               <th>Fecha</th>
               <th>Ingeniero</th>
               <th>Tipo</th>
-              <th>Proyecto / Fase / Tarea</th>
+              <th>Proyecto</th>
+              <th>Fase</th>
+              <th>Tarea</th>
               <th>Horas</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="tabla-body">
-            <tr><td colspan="6" class="loading"><span class="spinner"></span>Cargando registros...</td></tr>
+            <tr><td colspan="8" class="loading"><span class="spinner"></span>Cargando registros...</td></tr>
           </tbody>
         </table>
       </div>
@@ -462,18 +464,17 @@ function actualizarStats() {
 
 function renderTabla(lista) {
   const tbody = document.getElementById('tabla-body');
-  if(!lista.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">No hay registros aún.</td></tr>'; return; }
+  if(!lista.length) { tbody.innerHTML='<tr><td colspan="8" class="empty">No hay registros aún.</td></tr>'; return; }
   tbody.innerHTML = lista.map(r => `<tr>
     <td class="mono">${r.fecha?.split('T')[0]||'—'}</td>
     <td style="font-weight:500;">${r.ingeniero_nombre||'—'}</td>
     <td><span class="badge badge-${r.tipo}">${TIPO_LABELS[r.tipo]||r.tipo}</span></td>
     <td>
-      ${r.tipo_proyecto ? `<div style="font-size:10px;color:var(--accent2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">${TIPO_PROYECTO_LABELS[r.tipo_proyecto]||r.tipo_proyecto}</div>` : ''}
-      <div style="font-size:13px;font-weight:500;margin-bottom:2px;">${r.proyecto_nombre||'—'}</div>
-      ${r.fase_nombre ? `<div style="font-size:11px;color:var(--accent2);">↳ Fase: ${r.fase_nombre}</div>` : ''}
-      ${r.fase_nombre && r.descripcion ? `<div style="font-size:11px;color:var(--text2);">↳ Tarea: ${r.descripcion}</div>` : ''}
-      ${!r.proyecto_nombre && r.descripcion ? `<div style="font-size:12px;color:var(--text2);">${r.descripcion}</div>` : ''}
+      ${r.tipo_proyecto ? `<div style="font-size:10px;color:var(--accent2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;">${TIPO_PROYECTO_LABELS[r.tipo_proyecto]||r.tipo_proyecto}</div>` : ''}
+      <div style="font-size:13px;font-weight:500;">${r.proyecto_nombre||'—'}</div>
     </td>
+    <td style="font-size:12px;color:var(--accent2);">${r.fase_nombre||'—'}</td>
+    <td style="font-size:12px;color:var(--text2);">${r.fase_nombre ? (r.descripcion||'—') : (r.proyecto_nombre ? '—' : (r.descripcion||'—'))}</td>
     <td class="mono" style="font-weight:500;">${parseFloat(r.horas_reales||0).toFixed(1)}h</td>
     <td><button class="btn btn-danger" onclick="eliminar(${r.id})">✕</button></td>
   </tr>`).join('');

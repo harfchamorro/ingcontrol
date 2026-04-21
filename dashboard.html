@@ -251,7 +251,10 @@ async function consultar(accion, datos={}) {
       body:JSON.stringify({accion,...datos})
     });
     const d = await res.json();
-    return Array.isArray(d) ? d : (d.data ? [].concat(d.data) : []);
+    if(Array.isArray(d)) return d;
+    if(d.data) return [].concat(d.data);
+    if(d.success && d.data) return [].concat(d.data);
+    return [];
   } catch(e) { return []; }
 }
 

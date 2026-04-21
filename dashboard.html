@@ -167,9 +167,11 @@
           <thead>
             <tr>
               <th>Proyecto</th>
-              <th>Dept</th>
+              <th>Tipo</th>
+              <th>Fases</th>
               <th>Proyectado</th>
               <th>Real</th>
+              <th>Avance</th>
               <th>Desviación</th>
             </tr>
           </thead>
@@ -299,18 +301,32 @@ async function cargarHorasActividad() {
 async function cargarProyectadoVsReal() {
   const data = await consultar('proyectado_vs_real');
   const tbody = document.getElementById('tabla-proyectado');
-  if(!data.length) { tbody.innerHTML='<tr><td colspan="5" class="loading-text">Sin datos con horas proyectadas</td></tr>'; return; }
-  const deptLabels = {comercial:'Comercial',ingenieria:'Ingeniería',fabricacion:'Fabricación'};
+  if(!data.length) { tbody.innerHTML='<tr><td colspan="7" class="loading-text">Sin datos con horas proyectadas</td></tr>'; return; }
+  const tipoLabels = {externo:'Externo',interno:'Interno',desarrollo_producto:'Desarrollo',licitacion:'Licitación',edicion_planos:'Ed.Planos',otros:'Otros'};
   tbody.innerHTML = data.map(p => {
     const desv = parseFloat(p.desviacion)||0;
     const pctDesv = parseFloat(p.porcentaje_desviacion)||0;
+    const avance = parseFloat(p.porcentaje_avance)||0;
     const diffClass = desv > 0 ? 'diff-pos' : desv < 0 ? 'diff-neg' : 'diff-ok';
-    const diffText = desv > 0 ? `+${desv}h (+${pctDesv}%)` : desv < 0 ? `${desv}h (${pctDesv}%)` : '0h';
+    const diffText = desv > 0 ? `+${desv}h` : desv < 0 ? `${desv}h` : '0h';
+    const avanceColor = avance >= 100 ? '#f87171' : avance >= 75 ? '#fbbf24' : '#6ee7b7';
     return `<tr>
-      <td style="font-weight:500;">${p.proyecto}</td>
-      <td><span class="badge badge-${p.departamento_solicitante}">${deptLabels[p.departamento_solicitante]||p.departamento_solicitante}</span></td>
+      <td>
+        <div style="font-weight:500;font-size:13px;">${p.proyecto}</div>
+        <div style="font-size:10px;color:var(--text2);">${p.complejidad||''}</div>
+      </td>
+      <td><span style="font-size:10px;padding:2px 6px;border-radius:10px;background:rgba(129,140,248,.15);color:var(--accent2);">${tipoLabels[p.tipo_proyecto]||p.tipo_proyecto||'—'}</span></td>
+      <td style="font-family:'DM Mono',monospace;text-align:center;">${p.total_fases||0}</td>
       <td style="font-family:'DM Mono',monospace;">${p.horas_proyectadas||0}h</td>
       <td style="font-family:'DM Mono',monospace;">${p.horas_reales||0}h</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+            <div style="width:${Math.min(avance,100)}%;height:100%;background:${avanceColor};border-radius:3px;"></div>
+          </div>
+          <span style="font-size:11px;font-family:'DM Mono',monospace;color:${avanceColor};min-width:35px;">${avance}%</span>
+        </div>
+      </td>
       <td class="${diffClass}">${diffText}</td>
     </tr>`;
   }).join('');

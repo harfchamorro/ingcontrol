@@ -460,8 +460,6 @@ function actualizarStats() {
   document.getElementById('stat-mes').textContent = regMes;
 }
 
-const TIPO_PROYECTO_LABELS = {externo:'Externo',interno:'Interno',desarrollo_producto:'Desarrollo',licitacion:'Licitación',edicion_planos:'Ed. Planos',otros:'Otros'};
-
 function renderTabla(lista) {
   const tbody = document.getElementById('tabla-body');
   if(!lista.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">No hay registros aún.</td></tr>'; return; }

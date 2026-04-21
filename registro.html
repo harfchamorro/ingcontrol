@@ -19,19 +19,29 @@
   .container{max-width:1200px;margin:0 auto;padding:32px 24px;}
   .page-title{font-size:22px;font-weight:600;margin-bottom:4px;}
   .page-sub{font-size:14px;color:var(--text2);margin-bottom:28px;}
-  .layout{display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start;}
+  .layout{display:grid;grid-template-columns:400px 1fr;gap:24px;align-items:start;}
   .form-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;position:sticky;top:24px;}
-  .form-card-title{font-size:16px;font-weight:600;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .form-card-title{font-size:16px;font-weight:600;margin-bottom:6px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .form-card-sub{font-size:12px;color:var(--text2);margin-bottom:16px;margin-top:-10px;padding-bottom:14px;border-bottom:1px solid var(--border);}
   .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
   label{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;}
   input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;width:100%;}
   input:focus,select:focus,textarea:focus{border-color:var(--accent2);}
   select option{background:#1a1a1f;color:var(--text);}
+  select:disabled{opacity:.5;cursor:not-allowed;}
   .required{color:var(--danger);margin-left:2px;}
   .tipo-tabs{display:flex;gap:6px;margin-bottom:14px;}
-  .tipo-tab{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s;}
+  .tipo-tab{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s;}
   .tipo-tab.active{background:rgba(110,231,183,.1);border-color:var(--accent);color:var(--accent);}
-  .horas-hint{font-size:12px;color:var(--accent);margin-top:4px;display:none;}
+  .fase-info{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;display:none;}
+  .fase-info-label{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+  .fase-info-horas{display:flex;gap:16px;margin-top:6px;}
+  .fase-info-item{font-size:12px;}
+  .fase-info-item span{color:var(--text2);display:block;font-size:10px;}
+  .fase-info-item strong{font-family:'DM Mono',monospace;}
+  .fase-info-item strong.ok{color:var(--accent);}
+  .fase-info-item strong.warn{color:var(--warning);}
+  .fase-info-item strong.danger{color:var(--danger);}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;border:none;transition:all .15s;width:100%;}
   .btn-primary{background:var(--accent);color:#0f2419;}
   .btn-primary:hover{background:#4fd4a0;}
@@ -43,11 +53,10 @@
   .stat-value.green{color:var(--accent);}
   .stat-value.purple{color:var(--accent2);}
   .stat-value.yellow{color:var(--warning);}
-  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;}
-  .search-wrap{position:relative;flex:1;}
-  .search-wrap input{width:100%;}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+  .search-wrap{position:relative;flex:1;min-width:180px;}
+  .search-wrap input{width:100%;padding-left:36px;}
   .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);}
-  .search-wrap input{padding-left:36px;}
   select.filter{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
   .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   table{width:100%;border-collapse:collapse;}
@@ -58,6 +67,7 @@
   tbody td{padding:10px 14px;font-size:13px;}
   .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
   .badge-proyecto{background:rgba(129,140,248,.12);color:var(--accent2);}
+  .badge-interno{background:rgba(110,231,183,.12);color:var(--accent);}
   .badge-reunion{background:rgba(110,231,183,.12);color:var(--accent);}
   .badge-capacitacion{background:rgba(251,191,36,.12);color:var(--warning);}
   .badge-administrativo{background:rgba(248,113,113,.12);color:var(--danger);}
@@ -74,7 +84,10 @@
   .toast.show{display:flex;}
   .toast.success{border-color:var(--accent);color:var(--accent);}
   .toast.error{border-color:var(--danger);color:var(--danger);}
-  .section-divider{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;padding:8px 14px;background:var(--surface2);border-bottom:1px solid var(--border);}
+  .step-indicator{display:flex;gap:0;margin-bottom:18px;}
+  .step{flex:1;text-align:center;font-size:10px;font-family:'DM Mono',monospace;color:var(--text2);padding:6px 4px;border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.04em;transition:all .2s;}
+  .step.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .step.done{color:var(--accent2);border-bottom-color:var(--accent2);}
 </style>
 </head>
 <body>
@@ -90,18 +103,81 @@
 
 <div class="container">
   <div class="page-title">Registro de tiempo</div>
-  <div class="page-sub">Registra las horas trabajadas por actividad y proyecto</div>
+  <div class="page-sub">Registra horas por proyecto, fase y tarea</div>
 
   <div class="layout">
     <!-- FORMULARIO -->
     <div class="form-card">
       <div class="form-card-title">Nueva entrada</div>
 
+      <!-- Indicador de pasos -->
+      <div class="step-indicator">
+        <div class="step active" id="step-1">1. Ingeniero</div>
+        <div class="step" id="step-2">2. Proyecto</div>
+        <div class="step" id="step-3">3. Fase</div>
+        <div class="step" id="step-4">4. Tarea</div>
+      </div>
+
+      <!-- Tipo de registro -->
+      <div class="form-group">
+        <label>Tipo de registro <span class="required">*</span></label>
+        <div class="tipo-tabs">
+          <button class="tipo-tab active" onclick="setTipo('proyecto', this)">Proyecto</button>
+          <button class="tipo-tab" onclick="setTipo('reunion', this)">Reunión</button>
+          <button class="tipo-tab" onclick="setTipo('capacitacion', this)">Capacitación</button>
+          <button class="tipo-tab" onclick="setTipo('administrativo', this)">Admin</button>
+        </div>
+      </div>
+
+      <!-- Paso 1: Ingeniero -->
       <div class="form-group">
         <label>Ingeniero <span class="required">*</span></label>
-        <select id="f-ingeniero" onchange="cargarProyectos()">
+        <select id="f-ingeniero" onchange="onIngenieroChange()">
           <option value="">Seleccionar ingeniero...</option>
         </select>
+      </div>
+
+      <!-- Paso 2: Proyecto (solo visible en tipo proyecto) -->
+      <div id="grupo-proyecto">
+        <div class="form-group">
+          <label>Proyecto asignado <span class="required">*</span></label>
+          <select id="f-proyecto" onchange="onProyectoChange()" disabled>
+            <option value="">Primero selecciona un ingeniero...</option>
+          </select>
+        </div>
+
+        <!-- Paso 3: Fase -->
+        <div class="form-group">
+          <label>Fase <span class="required">*</span></label>
+          <select id="f-fase" onchange="onFaseChange()" disabled>
+            <option value="">Primero selecciona un proyecto...</option>
+          </select>
+        </div>
+
+        <!-- Info de horas de la fase -->
+        <div class="fase-info" id="fase-info">
+          <div class="fase-info-label">Estado de la fase</div>
+          <div class="fase-info-horas">
+            <div class="fase-info-item">
+              <span>Horas estimadas</span>
+              <strong id="fi-estimadas">—</strong>
+            </div>
+            <div class="fase-info-item">
+              <span>Horas registradas</span>
+              <strong id="fi-reales">—</strong>
+            </div>
+            <div class="fase-info-item">
+              <span>Disponibles</span>
+              <strong id="fi-disponibles">—</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso 4: Tarea específica -->
+      <div class="form-group">
+        <label>Tarea específica <span class="required">*</span></label>
+        <input type="text" id="f-tarea" placeholder="Ej: Revisión de planos estructurales..." disabled>
       </div>
 
       <div class="form-group">
@@ -110,45 +186,19 @@
       </div>
 
       <div class="form-group">
-        <label>Tipo de actividad <span class="required">*</span></label>
-        <div class="tipo-tabs">
-          <button class="tipo-tab active" onclick="setTipo('proyecto')">Proyecto</button>
-          <button class="tipo-tab" onclick="setTipo('reunion')">Reunión</button>
-          <button class="tipo-tab" onclick="setTipo('capacitacion')">Capacitación</button>
-          <button class="tipo-tab" onclick="setTipo('administrativo')">Admin</button>
-        </div>
-      </div>
-
-      <div id="grupo-proyecto">
-        <div class="form-group">
-          <label>Proyecto</label>
-          <select id="f-proyecto" onchange="cargarActividades()">
-            <option value="">Seleccionar proyecto...</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Actividad</label>
-          <select id="f-actividad" onchange="mostrarHorasEstandar()">
-            <option value="">Seleccionar actividad...</option>
-          </select>
-          <div class="horas-hint" id="horas-hint"></div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Horas reales <span class="required">*</span></label>
+        <label>Horas <span class="required">*</span></label>
         <input type="number" id="f-horas" placeholder="0.5" min="0.5" step="0.5">
       </div>
 
       <div class="form-group">
-        <label>Notas</label>
-        <textarea id="f-notas" placeholder="Descripción opcional..." rows="2"></textarea>
+        <label>Notas adicionales</label>
+        <textarea id="f-notas" placeholder="Observaciones opcionales..." rows="2"></textarea>
       </div>
 
       <button class="btn btn-primary" onclick="guardar()">Registrar tiempo</button>
     </div>
 
-    <!-- TABLA -->
+    <!-- TABLA DE REGISTROS -->
     <div>
       <div class="stats">
         <div class="stat-card"><div class="stat-label">Horas hoy</div><div class="stat-value green" id="stat-hoy">—</div></div>
@@ -180,15 +230,13 @@
               <th>Fecha</th>
               <th>Ingeniero</th>
               <th>Tipo</th>
-              <th>Proyecto / Actividad</th>
-              <th>Horas reales</th>
-              <th>Estándar</th>
-              <th>Diferencia</th>
+              <th>Proyecto / Fase / Tarea</th>
+              <th>Horas</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="tabla-body">
-            <tr><td colspan="8" class="loading"><span class="spinner"></span>Cargando registros...</td></tr>
+            <tr><td colspan="6" class="loading"><span class="spinner"></span>Cargando registros...</td></tr>
           </tbody>
         </table>
       </div>
@@ -199,12 +247,15 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'https://primary-production-420b7.up.railway.app/webhook/registro-tiempo';
-const API_ING = 'https://primary-production-420b7.up.railway.app/webhook/ingenieros';
-const API_PROY = 'https://primary-production-420b7.up.railway.app/webhook/proyectos';
-const API_ACT = 'https://primary-production-420b7.up.railway.app/webhook/actividades';
+const API       = 'https://primary-production-420b7.up.railway.app/webhook/registro-tiempo';
+const API_ING   = 'https://primary-production-420b7.up.railway.app/webhook/ingenieros';
+const API_PROY  = 'https://primary-production-420b7.up.railway.app/webhook/proyectos';
+const API_FASES = 'https://primary-production-420b7.up.railway.app/webhook/proyecto-fases';
 
-let registros=[], ingenieros=[], proyectos=[], actividades=[], tipoActual='proyecto';
+let registros=[], ingenieros=[], tipoActual='proyecto';
+let fasesActuales = [];
+
+const TIPO_LABELS = {proyecto:'Proyecto',reunion:'Reunión',capacitacion:'Capacitación',administrativo:'Administrativo',otro:'Otro'};
 
 async function api(url, accion, datos={}) {
   const res = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion,...datos})});
@@ -216,23 +267,12 @@ function parseData(d) { return Array.isArray(d) ? d : (d.data ? [].concat(d.data
 
 async function cargarInicial() {
   try {
-    // Primero carga ingenieros, proyectos y actividades
-    const [dataI, dataP, dataA] = await Promise.all([
+    const [dataI, dataR] = await Promise.all([
       api(API_ING, 'listar'),
-      api(API_PROY, 'listar'),
-      api(API_ACT, 'listar')
+      api(API, 'listar').catch(()=>([]))
     ]);
     ingenieros = parseData(dataI).filter(i=>i.activo==1);
-    proyectos = parseData(dataP);
-    actividades = parseData(dataA);
-
-    // Luego carga registros por separado
-    try {
-      const dataR = await api(API, 'listar');
-      registros = parseData(dataR);
-    } catch(e) {
-      registros = [];
-    }
+    registros = parseData(dataR);
 
     const selIng = document.getElementById('f-ingeniero');
     selIng.innerHTML = '<option value="">Seleccionar ingeniero...</option>' +
@@ -242,50 +282,168 @@ async function cargarInicial() {
     filtroIng.innerHTML = '<option value="">Todos los ingenieros</option>' +
       ingenieros.map(i=>`<option value="${i.id}">${i.nombre} ${i.apellido}</option>`).join('');
 
-    const selProy = document.getElementById('f-proyecto');
-    selProy.innerHTML = '<option value="">Seleccionar proyecto...</option>' +
-      proyectos.map(p=>`<option value="${p.id}" data-complejidad="${p.complejidad||''}">${p.nombre}</option>`).join('');
-
     renderTabla(registros);
     actualizarStats();
   } catch(e) {
-    document.getElementById('tabla-body').innerHTML = '<tr><td colspan="8" class="empty">Error al conectar.</td></tr>';
+    document.getElementById('tabla-body').innerHTML = '<tr><td colspan="6" class="empty">Error al conectar.</td></tr>';
   }
 }
 
-function cargarActividades() {
+// Cuando cambia el ingeniero → cargar sus proyectos asignados
+async function onIngenieroChange() {
+  const ingId = document.getElementById('f-ingeniero').value;
+  const selProy = document.getElementById('f-proyecto');
+  const selFase = document.getElementById('f-fase');
+  const inputTarea = document.getElementById('f-tarea');
+
+  // Reset cascada
+  selFase.innerHTML = '<option value="">Primero selecciona un proyecto...</option>';
+  selFase.disabled = true;
+  inputTarea.disabled = true;
+  document.getElementById('fase-info').style.display = 'none';
+  fasesActuales = [];
+  actualizarSteps(1);
+
+  if(!ingId || tipoActual !== 'proyecto') {
+    selProy.innerHTML = '<option value="">Primero selecciona un ingeniero...</option>';
+    selProy.disabled = true;
+    return;
+  }
+
+  selProy.innerHTML = '<option value="">Cargando proyectos...</option>';
+  selProy.disabled = true;
+
+  try {
+    const data = await api(API_PROY, 'listar');
+    const todos = parseData(data);
+    // Filtrar solo proyectos asignados al ingeniero
+    const asignados = todos.filter(p => {
+      if(!p.ingenieros_asignados) return false;
+      // Buscar si el nombre del ingeniero está en la lista
+      const ing = ingenieros.find(i=>i.id==ingId);
+      if(!ing) return false;
+      return p.ingenieros_asignados.includes(ing.nombre) || p.ingenieros_asignados.includes(ing.apellido);
+    });
+
+    if(!asignados.length) {
+      selProy.innerHTML = '<option value="">Sin proyectos asignados</option>';
+      selProy.disabled = true;
+    } else {
+      selProy.innerHTML = '<option value="">Seleccionar proyecto...</option>' +
+        asignados.map(p=>`<option value="${p.id}" data-tipo="${p.tipo_proyecto||''}" data-complejidad="${p.complejidad||''}">${p.nombre}</option>`).join('');
+      selProy.disabled = false;
+      actualizarSteps(2);
+    }
+  } catch(e) {
+    selProy.innerHTML = '<option value="">Error al cargar proyectos</option>';
+    selProy.disabled = true;
+  }
+}
+
+// Cuando cambia el proyecto → cargar sus fases
+async function onProyectoChange() {
   const proyId = document.getElementById('f-proyecto').value;
-  const sel = document.getElementById('f-actividad');
-  sel.innerHTML = '<option value="">Seleccionar actividad...</option>' +
-    actividades.map(a=>`<option value="${a.id}" data-h-pequeño="${a['horas_pequeño']||''}" data-h-mediano="${a.horas_mediano||''}" data-h-grande="${a.horas_grande||''}">${a.nombre}</option>`).join('');
-  document.getElementById('horas-hint').style.display = 'none';
-}
+  const selFase = document.getElementById('f-fase');
+  const inputTarea = document.getElementById('f-tarea');
 
-function cargarProyectos() { cargarActividades(); }
+  document.getElementById('fase-info').style.display = 'none';
+  inputTarea.disabled = true;
+  fasesActuales = [];
+  actualizarSteps(2);
 
-function mostrarHorasEstandar() {
-  const actOpt = document.getElementById('f-actividad').selectedOptions[0];
-  const proyOpt = document.getElementById('f-proyecto').selectedOptions[0];
-  if(!actOpt || !actOpt.value || !proyOpt || !proyOpt.value) { document.getElementById('horas-hint').style.display='none'; return; }
-  const comp = proyOpt.getAttribute('data-complejidad');
-  let horas = null;
-  if(comp==='pequeño') horas = actOpt.getAttribute('data-h-pequeño');
-  else if(comp==='mediano') horas = actOpt.getAttribute('data-h-mediano');
-  else if(comp==='grande') horas = actOpt.getAttribute('data-h-grande');
-  const hint = document.getElementById('horas-hint');
-  if(horas) {
-    hint.textContent = `Tiempo estándar para proyecto ${comp}: ${horas}h`;
-    hint.style.display = 'block';
-  } else {
-    hint.style.display = 'none';
+  if(!proyId) {
+    selFase.innerHTML = '<option value="">Primero selecciona un proyecto...</option>';
+    selFase.disabled = true;
+    return;
+  }
+
+  selFase.innerHTML = '<option value="">Cargando fases...</option>';
+  selFase.disabled = true;
+
+  try {
+    const data = await api(API_FASES, 'listar', {proyecto_id: parseInt(proyId)});
+    fasesActuales = parseData(data);
+
+    if(!fasesActuales.length) {
+      selFase.innerHTML = '<option value="">Este proyecto no tiene fases definidas</option>';
+      selFase.disabled = true;
+    } else {
+      selFase.innerHTML = '<option value="">Seleccionar fase...</option>' +
+        fasesActuales.map(f=>`<option value="${f.id}" data-estimadas="${f.horas_estimadas||0}" data-reales="${f.horas_reales||0}" data-estado="${f.estado}">${f.orden}. ${f.nombre}</option>`).join('');
+      selFase.disabled = false;
+      actualizarSteps(3);
+    }
+  } catch(e) {
+    selFase.innerHTML = '<option value="">Error al cargar fases</option>';
+    selFase.disabled = true;
   }
 }
 
-function setTipo(tipo) {
+// Cuando cambia la fase → mostrar info de horas y habilitar tarea
+function onFaseChange() {
+  const selFase = document.getElementById('f-fase');
+  const opt = selFase.selectedOptions[0];
+  const inputTarea = document.getElementById('f-tarea');
+  const faseInfo = document.getElementById('fase-info');
+
+  if(!opt || !opt.value) {
+    faseInfo.style.display = 'none';
+    inputTarea.disabled = true;
+    actualizarSteps(3);
+    return;
+  }
+
+  const estimadas = parseFloat(opt.getAttribute('data-estimadas')) || 0;
+  const reales = parseFloat(opt.getAttribute('data-reales')) || 0;
+  const disponibles = estimadas - reales;
+
+  document.getElementById('fi-estimadas').textContent = estimadas ? estimadas+'h' : '—';
+  document.getElementById('fi-reales').textContent = reales.toFixed(1)+'h';
+
+  const dispEl = document.getElementById('fi-disponibles');
+  if(!estimadas) {
+    dispEl.textContent = '—';
+    dispEl.className = '';
+  } else if(disponibles > 0) {
+    dispEl.textContent = disponibles.toFixed(1)+'h';
+    dispEl.className = 'ok';
+  } else if(disponibles === 0) {
+    dispEl.textContent = '0h';
+    dispEl.className = 'warn';
+  } else {
+    dispEl.textContent = disponibles.toFixed(1)+'h';
+    dispEl.className = 'danger';
+  }
+
+  faseInfo.style.display = 'block';
+  inputTarea.disabled = false;
+  inputTarea.focus();
+  actualizarSteps(4);
+}
+
+function actualizarSteps(activo) {
+  for(let i=1; i<=4; i++) {
+    const el = document.getElementById('step-'+i);
+    if(i < activo) el.className = 'step done';
+    else if(i === activo) el.className = 'step active';
+    else el.className = 'step';
+  }
+}
+
+function setTipo(tipo, btn) {
   tipoActual = tipo;
   document.querySelectorAll('.tipo-tab').forEach(t=>t.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('grupo-proyecto').style.display = tipo==='proyecto' ? 'block' : 'none';
+  btn.classList.add('active');
+  const grupoProy = document.getElementById('grupo-proyecto');
+  const inputTarea = document.getElementById('f-tarea');
+  if(tipo === 'proyecto') {
+    grupoProy.style.display = 'block';
+    onIngenieroChange();
+  } else {
+    grupoProy.style.display = 'none';
+    inputTarea.disabled = false;
+    actualizarSteps(1);
+  }
 }
 
 function actualizarStats() {
@@ -303,28 +461,19 @@ function actualizarStats() {
 
 function renderTabla(lista) {
   const tbody = document.getElementById('tabla-body');
-  if(!lista.length) { tbody.innerHTML='<tr><td colspan="8" class="empty">No hay registros aún.</td></tr>'; return; }
-  const tipoLabels = {proyecto:'Proyecto',reunion:'Reunión',capacitacion:'Capacitación',administrativo:'Administrativo',otro:'Otro'};
-  tbody.innerHTML = lista.map(r => {
-    const diff = r.diferencia !== null && r.diferencia !== undefined ? parseFloat(r.diferencia) : null;
-    const diffHtml = diff === null ? '<span class="diff-ok">—</span>' :
-      diff > 0 ? `<span class="diff-pos">+${diff}h</span>` :
-      diff < 0 ? `<span class="diff-neg">${diff}h</span>` :
-      '<span class="diff-ok">0h</span>';
-    return `<tr>
-      <td class="mono">${r.fecha?.split('T')[0]||'—'}</td>
-      <td style="font-weight:500;">${r.ingeniero_nombre||'—'}</td>
-      <td><span class="badge badge-${r.tipo}">${tipoLabels[r.tipo]||r.tipo}</span></td>
-      <td>
-        <div style="font-size:13px;">${r.proyecto_nombre||'—'}</div>
-        ${r.actividad_nombre ? `<div style="font-size:11px;color:var(--text2);">${r.actividad_nombre}</div>` : ''}
-      </td>
-      <td class="mono" style="font-weight:500;">${parseFloat(r.horas_reales||0).toFixed(1)}h</td>
-      <td class="mono" style="color:var(--text2);">${r.horas_estandar ? parseFloat(r.horas_estandar).toFixed(1)+'h' : '—'}</td>
-      <td>${diffHtml}</td>
-      <td><button class="btn btn-danger" onclick="eliminar(${r.id})">✕</button></td>
-    </tr>`;
-  }).join('');
+  if(!lista.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">No hay registros aún.</td></tr>'; return; }
+  tbody.innerHTML = lista.map(r => `<tr>
+    <td class="mono">${r.fecha?.split('T')[0]||'—'}</td>
+    <td style="font-weight:500;">${r.ingeniero_nombre||'—'}</td>
+    <td><span class="badge badge-${r.tipo}">${TIPO_LABELS[r.tipo]||r.tipo}</span></td>
+    <td>
+      <div style="font-size:13px;font-weight:500;">${r.proyecto_nombre||r.descripcion||'—'}</div>
+      ${r.fase_nombre ? `<div style="font-size:11px;color:var(--accent2);">↳ ${r.fase_nombre}</div>` : ''}
+      ${r.tarea_nombre ? `<div style="font-size:11px;color:var(--text2);">↳ ${r.tarea_nombre}</div>` : ''}
+    </td>
+    <td class="mono" style="font-weight:500;">${parseFloat(r.horas_reales||0).toFixed(1)}h</td>
+    <td><button class="btn btn-danger" onclick="eliminar(${r.id})">✕</button></td>
+  </tr>`).join('');
 }
 
 function filtrar() {
@@ -332,7 +481,7 @@ function filtrar() {
   const ing = document.getElementById('filtro-ing').value;
   const tipo = document.getElementById('filtro-tipo').value;
   const filtrados = registros.filter(r => {
-    const matchQ = ((r.ingeniero_nombre||'')+(r.proyecto_nombre||'')+(r.actividad_nombre||'')).toLowerCase().includes(q);
+    const matchQ = ((r.ingeniero_nombre||'')+(r.proyecto_nombre||'')+(r.descripcion||'')+(r.fase_nombre||'')+(r.tarea_nombre||'')).toLowerCase().includes(q);
     const matchI = !ing || r.ingeniero_id == ing;
     const matchT = !tipo || r.tipo === tipo;
     return matchQ && matchI && matchT;
@@ -353,43 +502,39 @@ async function guardar() {
   const ingId = document.getElementById('f-ingeniero').value;
   const fecha = document.getElementById('f-fecha').value;
   const horas = parseFloat(document.getElementById('f-horas').value);
+  const tarea = document.getElementById('f-tarea').value.trim();
 
   if(!ingId) { toast('Selecciona un ingeniero','error'); return; }
   if(!fecha) { toast('Selecciona la fecha','error'); return; }
-  if(!horas || horas <= 0) { toast('Ingresa las horas reales','error'); return; }
-  if(tipoActual === 'proyecto' && !document.getElementById('f-proyecto').value) {
-    toast('Selecciona un proyecto','error'); return;
+  if(!horas || horas <= 0) { toast('Ingresa las horas','error'); return; }
+  if(!tarea) { toast('Describe la tarea realizada','error'); return; }
+
+  if(tipoActual === 'proyecto') {
+    if(!document.getElementById('f-proyecto').value) { toast('Selecciona un proyecto','error'); return; }
+    if(!document.getElementById('f-fase').value) { toast('Selecciona una fase','error'); return; }
   }
 
-  const proyId = document.getElementById('f-proyecto').value || null;
-  const actId = document.getElementById('f-actividad').value || null;
-
-  let horasEstandar = null;
-  if(actId && proyId) {
-    const actOpt = document.getElementById('f-actividad').selectedOptions[0];
-    const proyOpt = document.getElementById('f-proyecto').selectedOptions[0];
-    const comp = proyOpt.getAttribute('data-complejidad');
-    if(comp==='pequeño') horasEstandar = parseFloat(actOpt.getAttribute('data-h-pequeño'))||null;
-    else if(comp==='mediano') horasEstandar = parseFloat(actOpt.getAttribute('data-h-mediano'))||null;
-    else if(comp==='grande') horasEstandar = parseFloat(actOpt.getAttribute('data-h-grande'))||null;
-  }
+  const proyId = tipoActual === 'proyecto' ? parseInt(document.getElementById('f-proyecto').value) : null;
+  const faseId = tipoActual === 'proyecto' ? parseInt(document.getElementById('f-fase').value) : null;
 
   const datos = {
     ingeniero_id: parseInt(ingId),
     fecha,
     tipo: tipoActual,
-    proyecto_id: proyId ? parseInt(proyId) : null,
-    actividad_catalogo_id: actId ? parseInt(actId) : null,
+    proyecto_id: proyId,
+    proyecto_fase_id: faseId,
     horas_reales: horas,
-    horas_estandar: horasEstandar,
-    descripcion: document.getElementById('f-notas').value.trim()
+    descripcion: tarea + (document.getElementById('f-notas').value.trim() ? ' — ' + document.getElementById('f-notas').value.trim() : '')
   };
 
   try {
     await api(API, 'crear', datos);
-    toast('Tiempo registrado','success');
+    toast('Tiempo registrado correctamente','success');
     document.getElementById('f-horas').value='';
+    document.getElementById('f-tarea').value='';
     document.getElementById('f-notas').value='';
+    // Recargar fases para actualizar horas disponibles
+    if(faseId) onProyectoChange();
     cargarInicial();
   } catch(e) { toast('Error al registrar','error'); }
 }
@@ -401,7 +546,6 @@ function toast(msg,tipo='success') {
   setTimeout(()=>t.className='toast',3000);
 }
 
-// Set today's date
 document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
 cargarInicial();
 </script>

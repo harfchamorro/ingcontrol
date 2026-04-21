@@ -28,7 +28,7 @@
   .stat-value.yellow{color:var(--warning);}
   .stat-value.red{color:var(--danger);}
   .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;}
-  .toolbar-left{display:flex;gap:10px;align-items:center;}
+  .toolbar-left{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
   .search-wrap{position:relative;}
   .search-wrap input{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 14px 9px 36px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;width:240px;outline:none;}
   .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);}
@@ -43,6 +43,8 @@
   .btn-edit:hover{border-color:var(--accent2);color:var(--accent2);}
   .btn-assign{background:transparent;border:1px solid var(--accent);color:var(--accent);}
   .btn-assign:hover{background:rgba(110,231,183,.1);}
+  .btn-fases{background:transparent;border:1px solid var(--accent2);color:var(--accent2);}
+  .btn-fases:hover{background:rgba(129,140,248,.1);}
   .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
   .project-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;transition:border-color .2s;}
   .project-card:hover{border-color:var(--accent2);}
@@ -58,6 +60,7 @@
   .badge-comercial{background:rgba(129,140,248,.12);color:var(--accent2);}
   .badge-ingenieria{background:rgba(110,231,183,.12);color:var(--accent);}
   .badge-fabricacion{background:rgba(251,191,36,.12);color:var(--warning);}
+  .badge-tipo{background:rgba(129,140,248,.15);color:var(--accent2);}
   .card-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
   .info-item{font-size:12px;}
   .info-label{color:var(--text2);margin-bottom:2px;}
@@ -66,14 +69,14 @@
   .ing-label{font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
   .ing-chips{display:flex;flex-wrap:wrap;gap:4px;}
   .ing-chip{font-size:11px;padding:2px 8px;background:rgba(129,140,248,.15);color:var(--accent2);border-radius:20px;}
-  .card-actions{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+  .card-actions{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap;}
   .empty{text-align:center;padding:60px;color:var(--text2);font-size:14px;grid-column:1/-1;}
   .loading{text-align:center;padding:60px;color:var(--text2);font-size:14px;grid-column:1/-1;}
   .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;}
   .modal-overlay.open{display:flex;}
-  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:560px;padding:28px;max-height:95vh;overflow-y:auto;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:580px;padding:28px;max-height:95vh;overflow-y:auto;}
   .required{color:var(--danger);margin-left:2px;}
   .modal-title{font-size:18px;font-weight:600;margin-bottom:20px;}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
@@ -94,6 +97,20 @@
   .ing-select-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;cursor:pointer;border:1px solid transparent;}
   .ing-select-item:hover{border-color:var(--accent2);}
   .ing-select-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;}
+  /* Fases modal */
+  .modal-fases{max-width:620px;}
+  .fases-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+  .fase-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;}
+  .fase-orden{font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);background:var(--bg);border-radius:6px;padding:3px 8px;min-width:28px;text-align:center;}
+  .fase-info{flex:1;}
+  .fase-nombre{font-size:14px;font-weight:500;color:var(--text);}
+  .fase-estado{font-size:11px;margin-top:2px;}
+  .fase-estado.pendiente{color:var(--text2);}
+  .fase-estado.en_curso{color:var(--accent);}
+  .fase-estado.completada{color:var(--success);}
+  .fase-horas{font-size:12px;font-family:'DM Mono',monospace;color:var(--text2);text-align:right;}
+  .fase-horas span{display:block;font-size:10px;text-align:right;}
+  .info-tipo{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent2);background:rgba(129,140,248,.1);border-radius:6px;padding:4px 10px;margin-bottom:12px;}
 </style>
 </head>
 <body>
@@ -136,6 +153,15 @@
         <option value="ingenieria">Ingeniería</option>
         <option value="fabricacion">Fabricación</option>
       </select>
+      <select class="filter" id="filtro-tipo" onchange="filtrar()">
+        <option value="">Todos los tipos</option>
+        <option value="externo">Proyecto Externo</option>
+        <option value="interno">Proyecto Interno</option>
+        <option value="desarrollo_producto">Desarrollo de Producto</option>
+        <option value="licitacion">Licitación</option>
+        <option value="edicion_planos">Edición de Planos</option>
+        <option value="otros">Otros</option>
+      </select>
     </div>
   </div>
 
@@ -154,12 +180,25 @@
         <input type="text" id="f-nombre" placeholder="Ej: Estructura metálica Electroval">
       </div>
       <div class="form-group">
+        <label>Tipo de proyecto <span class="required">*</span></label>
+        <select id="f-tipo" onchange="onTipoChange()">
+          <option value="">Seleccionar...</option>
+          <option value="externo">Proyecto Externo</option>
+          <option value="interno">Proyecto Interno</option>
+          <option value="desarrollo_producto">Desarrollo de Producto</option>
+          <option value="licitacion">Licitación</option>
+          <option value="edicion_planos">Edición de Planos</option>
+          <option value="otros">Otros</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>Departamento solicitante <span class="required">*</span></label>
         <select id="f-dept">
           <option value="">Seleccionar...</option>
           <option value="comercial">Comercial</option>
           <option value="ingenieria">Ingeniería propia</option>
           <option value="fabricacion">Fabricación</option>
+          <option value="interno">Interno</option>
         </select>
       </div>
       <div class="form-group">
@@ -197,10 +236,15 @@
         <label>Descripción</label>
         <textarea id="f-desc" placeholder="Descripción del proyecto..."></textarea>
       </div>
+      <!-- Preview de fases -->
+      <div class="form-group full" id="fases-preview" style="display:none;">
+        <label>Fases que se crearán automáticamente</label>
+        <div id="fases-preview-list" style="display:flex;flex-direction:column;gap:6px;margin-top:4px;"></div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardar()">Guardar</button>
+      <button class="btn btn-primary" onclick="guardar()">Guardar proyecto</button>
     </div>
   </div>
 </div>
@@ -224,12 +268,43 @@
   </div>
 </div>
 
+<!-- MODAL FASES -->
+<div class="modal-overlay" id="modal-fases">
+  <div class="modal modal-fases">
+    <div class="modal-title" id="fases-proyecto-nombre">Fases del proyecto</div>
+    <div id="fases-tipo-badge"></div>
+    <div id="fases-loading" style="text-align:center;padding:30px;color:var(--text2);"><span class="spinner"></span>Cargando fases...</div>
+    <div class="fases-list" id="fases-list" style="display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cerrarModalFases()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'https://primary-production-420b7.up.railway.app/webhook/proyectos';
-const API_ING = 'https://primary-production-420b7.up.railway.app/webhook/ingenieros';
+const API       = 'https://primary-production-420b7.up.railway.app/webhook/proyectos';
+const API_ING   = 'https://primary-production-420b7.up.railway.app/webhook/ingenieros';
+const API_FASES = 'https://primary-production-420b7.up.railway.app/webhook/proyecto-fases';
+
 let proyectos = [], ingenieros = [], editandoId = null, asignandoId = null;
+
+// Fases por tipo — para el preview en el formulario
+const FASES_POR_TIPO = {
+  externo:            ['Análisis','Cotización','Diseño','Fabricación','Despacho','Instalación','Cierre'],
+  interno:            ['Análisis','Costeo','Diseño','Fabricación/Instalación','Pruebas','Cierre'],
+  desarrollo_producto:['Análisis','Cotización','Diseño','Fabricación de Muestras'],
+  licitacion:         ['Revisión de la Información','Identificación/Elaboración de Planos','Identificación/Elaboración de Fichas Técnicas','Llenado de Fichas Técnicas HDG'],
+  edicion_planos:     ['Revisión de la Información/Requerimiento','Actualización de Plano(s)'],
+  otros:              ['Actividad a Discreción']
+};
+
+const TIPO_LABELS = {
+  externo:'Proyecto Externo', interno:'Proyecto Interno',
+  desarrollo_producto:'Desarrollo de Producto', licitacion:'Licitación',
+  edicion_planos:'Edición de Planos', otros:'Otros'
+};
 
 async function llamarAPI(url, accion, datos={}) {
   const res = await fetch(url, {
@@ -250,8 +325,13 @@ function badgeEstado(e) {
 }
 
 function badgeDept(d) {
-  const labels = {comercial:'Comercial',ingenieria:'Ingeniería',fabricacion:'Fabricación'};
+  const labels = {comercial:'Comercial',ingenieria:'Ingeniería',fabricacion:'Fabricación',interno:'Interno'};
   return `<span class="badge badge-${d}">${labels[d]||d}</span>`;
+}
+
+function badgeTipo(t) {
+  if(!t) return '';
+  return `<span class="badge badge-tipo">⬡ ${TIPO_LABELS[t]||t}</span>`;
 }
 
 async function cargar() {
@@ -292,6 +372,8 @@ function renderCards(lista) {
           ${p.complejidad ? `<span class="badge" style="background:rgba(110,231,183,.1);color:var(--accent)">${p.complejidad}</span>` : ''}
         </div>
       </div>
+      ${p.tipo_proyecto ? `<div style="margin-bottom:10px;">${badgeTipo(p.tipo_proyecto)}</div>` : ''}
+      ${p.descripcion ? `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${p.descripcion}</div>` : ''}
       <div class="card-info">
         <div class="info-item">
           <div class="info-label">Valor estimado</div>
@@ -306,7 +388,6 @@ function renderCards(lista) {
           <div class="info-value">${formatFecha(p.fecha_fin_estimada)}</div>
         </div>
       </div>
-      ${p.descripcion ? `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${p.descripcion}</div>` : ''}
       <div class="card-ingenieros">
         <div class="ing-label">Ingenieros asignados</div>
         <div class="ing-chips">
@@ -316,6 +397,7 @@ function renderCards(lista) {
       <div class="card-actions">
         <button class="btn btn-edit btn-sm" onclick="editar(${p.id})">Editar</button>
         <button class="btn btn-assign btn-sm" onclick="abrirModalAssign(${p.id}, '${p.nombre.replace(/'/g,"\\'")}')">Asignar</button>
+        ${p.tipo_proyecto ? `<button class="btn btn-fases btn-sm" onclick="verFases(${p.id}, '${p.nombre.replace(/'/g,"\\'")}', '${p.tipo_proyecto}')">Ver fases</button>` : ''}
         <button class="btn btn-danger btn-sm" onclick="eliminar(${p.id})">Cancelar</button>
       </div>
     </div>
@@ -326,39 +408,59 @@ function filtrar() {
   const q = document.getElementById('buscar').value.toLowerCase();
   const estado = document.getElementById('filtro-estado').value;
   const dept = document.getElementById('filtro-dept').value;
+  const tipo = document.getElementById('filtro-tipo').value;
   const filtrados = proyectos.filter(p => {
     const matchQ = (p.nombre+' '+(p.cliente_nombre||'')+(p.descripcion||'')).toLowerCase().includes(q);
     const matchE = !estado || p.estado === estado;
     const matchD = !dept || p.departamento_solicitante === dept;
-    return matchQ && matchE && matchD;
+    const matchT = !tipo || p.tipo_proyecto === tipo;
+    return matchQ && matchE && matchD && matchT;
   });
   renderCards(filtrados);
+}
+
+// Mostrar preview de fases al seleccionar tipo
+function onTipoChange() {
+  const tipo = document.getElementById('f-tipo').value;
+  const preview = document.getElementById('fases-preview');
+  const lista = document.getElementById('fases-preview-list');
+  if(!tipo || editandoId) { preview.style.display='none'; return; }
+  const fases = FASES_POR_TIPO[tipo] || [];
+  lista.innerHTML = fases.map((f,i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);background:var(--bg);border-radius:4px;padding:2px 7px;">${i+1}</span>
+      <span style="font-size:13px;color:var(--text);">${f}</span>
+    </div>
+  `).join('');
+  preview.style.display = 'flex';
 }
 
 function abrirModal(id=null) {
   editandoId = id;
   document.getElementById('modal-title').textContent = id ? 'Editar proyecto' : 'Nuevo proyecto';
+  document.getElementById('fases-preview').style.display = 'none';
   if(id) {
     const p = proyectos.find(x=>x.id==id);
     document.getElementById('f-nombre').value = p.nombre||'';
-    document.getElementById('f-dept').value = p.departamento_solicitante||'comercial';
+    document.getElementById('f-tipo').value = p.tipo_proyecto||'';
+    document.getElementById('f-dept').value = p.departamento_solicitante||'';
     document.getElementById('f-complejidad').value = p.complejidad||'';
     document.getElementById('f-estado').value = p.estado||'cotizacion';
     document.getElementById('f-valor').value = p.valor_estimado||'';
-    document.getElementById('f-inicio').value = formatFecha(p.fecha_inicio);
-    document.getElementById('f-fin').value = formatFecha(p.fecha_fin_estimada);
+    document.getElementById('f-inicio').value = formatFecha(p.fecha_inicio) === '—' ? '' : formatFecha(p.fecha_inicio);
+    document.getElementById('f-fin').value = formatFecha(p.fecha_fin_estimada) === '—' ? '' : formatFecha(p.fecha_fin_estimada);
     document.getElementById('f-desc').value = p.descripcion||'';
   } else {
     ['f-nombre','f-valor','f-inicio','f-fin','f-desc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-tipo').value='';
     document.getElementById('f-dept').value='';
-    document.getElementById('f-estado').value='';
+    document.getElementById('f-estado').value='cotizacion';
     document.getElementById('f-complejidad').value='';
   }
   document.getElementById('modal').classList.add('open');
 }
 
 function cerrarModal() { document.getElementById('modal').classList.remove('open'); editandoId=null; }
-
 function editar(id) { abrirModal(id); }
 
 async function eliminar(id) {
@@ -373,6 +475,7 @@ async function eliminar(id) {
 async function guardar() {
   const datos = {
     nombre: document.getElementById('f-nombre').value.trim(),
+    tipo_proyecto: document.getElementById('f-tipo').value,
     departamento_solicitante: document.getElementById('f-dept').value,
     complejidad: document.getElementById('f-complejidad').value,
     estado: document.getElementById('f-estado').value,
@@ -382,6 +485,7 @@ async function guardar() {
     descripcion: document.getElementById('f-desc').value.trim()
   };
   if(!datos.nombre) { toast('El nombre es obligatorio','error'); return; }
+  if(!datos.tipo_proyecto && !editandoId) { toast('Selecciona el tipo de proyecto','error'); return; }
   if(!datos.departamento_solicitante) { toast('Selecciona el departamento solicitante','error'); return; }
   if(!datos.complejidad) { toast('Selecciona la complejidad del proyecto','error'); return; }
   if(!datos.estado) { toast('Selecciona el estado del proyecto','error'); return; }
@@ -391,12 +495,13 @@ async function guardar() {
       toast('Proyecto actualizado','success');
     } else {
       await llamarAPI(API, 'crear', datos);
-      toast('Proyecto creado','success');
+      toast('Proyecto creado — fases generadas automáticamente','success');
     }
     cerrarModal(); cargar();
   } catch(e) { toast(e.message?.includes('Duplicate') ? 'Ya existe un proyecto con ese nombre' : 'Error al guardar','error'); }
 }
 
+// Modal asignar ingenieros
 function abrirModalAssign(id, nombre) {
   asignandoId = id;
   document.getElementById('assign-proyecto-nombre').textContent = nombre;
@@ -427,15 +532,53 @@ async function guardarAsignacion() {
   } catch(e) { toast(e.message?.includes('Duplicate') ? 'Este ingeniero ya está asignado al proyecto' : 'Error al asignar','error'); }
 }
 
+// Modal fases del proyecto
+async function verFases(id, nombre, tipo) {
+  document.getElementById('fases-proyecto-nombre').textContent = nombre;
+  document.getElementById('fases-tipo-badge').innerHTML = `<div class="info-tipo">⬡ ${TIPO_LABELS[tipo]||tipo}</div>`;
+  document.getElementById('fases-loading').style.display = 'block';
+  document.getElementById('fases-list').style.display = 'none';
+  document.getElementById('modal-fases').classList.add('open');
+  try {
+    const data = await llamarAPI(API_FASES, 'listar', {proyecto_id: id});
+    const fases = Array.isArray(data) ? data : (data.data ? [].concat(data.data) : []);
+    const lista = document.getElementById('fases-list');
+    if(!fases.length) {
+      lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);font-size:14px;">No hay fases registradas para este proyecto.</div>';
+    } else {
+      lista.innerHTML = fases.map(f => `
+        <div class="fase-item">
+          <div class="fase-orden">${f.orden}</div>
+          <div class="fase-info">
+            <div class="fase-nombre">${f.nombre}</div>
+            <div class="fase-estado ${f.estado}">${f.estado||'pendiente'}</div>
+          </div>
+          <div class="fase-horas">
+            ${f.horas_reales||0}h / ${f.horas_estimadas||'—'}h
+            <span>real / est.</span>
+          </div>
+        </div>
+      `).join('');
+    }
+    document.getElementById('fases-loading').style.display = 'none';
+    lista.style.display = 'flex';
+  } catch(e) {
+    document.getElementById('fases-loading').innerHTML = '<div style="color:var(--danger);padding:20px;text-align:center;">Error al cargar las fases.</div>';
+  }
+}
+
+function cerrarModalFases() { document.getElementById('modal-fases').classList.remove('open'); }
+
 function toast(msg,tipo='success') {
   const t=document.getElementById('toast');
   t.textContent=(tipo==='success'?'✓ ':'✗ ')+msg;
   t.className='toast show '+tipo;
-  setTimeout(()=>t.className='toast',3000);
+  setTimeout(()=>t.className='toast',3500);
 }
 
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))cerrarModal();});
 document.getElementById('modal-assign').addEventListener('click',e=>{if(e.target===document.getElementById('modal-assign'))cerrarModalAssign();});
+document.getElementById('modal-fases').addEventListener('click',e=>{if(e.target===document.getElementById('modal-fases'))cerrarModalFases();});
 
 cargar();
 </script>

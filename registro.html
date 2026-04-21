@@ -256,6 +256,7 @@ let registros=[], ingenieros=[], tipoActual='proyecto';
 let fasesActuales = [];
 
 const TIPO_LABELS = {proyecto:'Proyecto',reunion:'Reunión',capacitacion:'Capacitación',administrativo:'Administrativo',otro:'Otro'};
+const TIPO_PROYECTO_LABELS = {externo:'Externo',interno:'Interno',desarrollo_producto:'Desarrollo',licitacion:'Licitación',edicion_planos:'Ed. Planos',otros:'Otros'};
 
 async function api(url, accion, datos={}) {
   const res = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion,...datos})});
@@ -459,6 +460,8 @@ function actualizarStats() {
   document.getElementById('stat-mes').textContent = regMes;
 }
 
+const TIPO_PROYECTO_LABELS = {externo:'Externo',interno:'Interno',desarrollo_producto:'Desarrollo',licitacion:'Licitación',edicion_planos:'Ed. Planos',otros:'Otros'};
+
 function renderTabla(lista) {
   const tbody = document.getElementById('tabla-body');
   if(!lista.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">No hay registros aún.</td></tr>'; return; }
@@ -467,9 +470,12 @@ function renderTabla(lista) {
     <td style="font-weight:500;">${r.ingeniero_nombre||'—'}</td>
     <td><span class="badge badge-${r.tipo}">${TIPO_LABELS[r.tipo]||r.tipo}</span></td>
     <td>
-      <div style="font-size:13px;font-weight:500;">${r.proyecto_nombre||r.descripcion||'—'}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+        <span style="font-size:13px;font-weight:500;">${r.proyecto_nombre||r.descripcion||'—'}</span>
+        ${r.tipo_proyecto ? `<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:rgba(129,140,248,.15);color:var(--accent2);">${TIPO_PROYECTO_LABELS[r.tipo_proyecto]||r.tipo_proyecto}</span>` : ''}
+      </div>
       ${r.fase_nombre ? `<div style="font-size:11px;color:var(--accent2);">↳ ${r.fase_nombre}</div>` : ''}
-      ${r.tarea_nombre ? `<div style="font-size:11px;color:var(--text2);">↳ ${r.tarea_nombre}</div>` : ''}
+      ${r.descripcion && r.proyecto_nombre ? `<div style="font-size:11px;color:var(--text2);">↳ ${r.descripcion}</div>` : ''}
     </td>
     <td class="mono" style="font-weight:500;">${parseFloat(r.horas_reales||0).toFixed(1)}h</td>
     <td><button class="btn btn-danger" onclick="eliminar(${r.id})">✕</button></td>

@@ -82,6 +82,31 @@
   .legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;}
   .legend-item{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);}
   .legend-dot{width:10px;height:10px;border-radius:2px;}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal-detalle{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:720px;padding:28px;max-height:90vh;overflow-y:auto;}
+  .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+  .modal-close{background:transparent;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:4px;}
+  .modal-close:hover{color:var(--text);}
+  .fase-row{display:flex;flex-direction:column;gap:6px;padding:12px;background:var(--surface2);border-radius:10px;margin-bottom:8px;}
+  .fase-top{display:flex;align-items:center;gap:10px;}
+  .fase-num{font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);background:var(--bg);border-radius:4px;padding:2px 7px;min-width:24px;text-align:center;}
+  .fase-nombre{font-size:13px;font-weight:500;flex:1;}
+  .fase-estado-badge{font-size:10px;padding:2px 8px;border-radius:10px;}
+  .fase-estado-pendiente{background:rgba(136,136,160,.15);color:var(--text2);}
+  .fase-estado-en_curso{background:rgba(110,231,183,.15);color:var(--accent);}
+  .fase-estado-completada{background:rgba(74,222,128,.15);color:var(--success);}
+  .fase-estado-pausada{background:rgba(251,191,36,.15);color:var(--warning);}
+  .fase-horas{display:flex;gap:16px;font-size:12px;font-family:'DM Mono',monospace;}
+  .fase-horas span{color:var(--text2);font-family:'DM Sans',monospace;font-size:11px;}
+  .fase-barra{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:4px;}
+  .fase-barra-fill{height:100%;border-radius:3px;transition:width .5s;}
+  .fase-ings{font-size:11px;color:var(--text2);margin-top:4px;}
+  .resumen-fases{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+  .resumen-item{background:var(--surface2);border-radius:8px;padding:12px;text-align:center;}
+  .resumen-item-val{font-size:20px;font-weight:600;font-family:'DM Mono',monospace;}
+  .resumen-item-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
 </style>
 </head>
 <body>
@@ -181,7 +206,37 @@
         </table>
       </div>
     </div>
+  
+<!-- MODAL DETALLE PROYECTO -->
+<div class="modal-overlay" id="modal-detalle">
+  <div class="modal-detalle">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:18px;font-weight:600;" id="det-nombre">—</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;" id="det-meta">—</div>
+      </div>
+      <button class="modal-close" onclick="cerrarDetalle()">✕</button>
+    </div>
+    <div class="resumen-fases">
+      <div class="resumen-item">
+        <div class="resumen-item-val green" id="det-proyectado">—</div>
+        <div class="resumen-item-label">Horas proyectadas</div>
+      </div>
+      <div class="resumen-item">
+        <div class="resumen-item-val purple" id="det-real">—</div>
+        <div class="resumen-item-label">Horas reales</div>
+      </div>
+      <div class="resumen-item">
+        <div class="resumen-item-val yellow" id="det-avance">—</div>
+        <div class="resumen-item-label">Avance general</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Detalle por fase</div>
+    <div id="det-fases"><div class="loading-text"><span class="spinner"></span>Cargando...</div></div>
   </div>
+</div>
+
+</div>
 </div>
 
 <script>
@@ -310,7 +365,7 @@ async function cargarProyectadoVsReal() {
     const diffClass = desv > 0 ? 'diff-pos' : desv < 0 ? 'diff-neg' : 'diff-ok';
     const diffText = desv > 0 ? `+${desv}h` : desv < 0 ? `${desv}h` : '0h';
     const avanceColor = avance >= 100 ? '#f87171' : avance >= 75 ? '#fbbf24' : '#6ee7b7';
-    return `<tr>
+    return `<tr style="cursor:pointer;" onclick="verDetalle(${p.id||0}, '${(p.proyecto||'').replace(/'/g,"\'")}', '${p.tipo_proyecto||''}', '${p.complejidad||''}', ${p.horas_proyectadas||0}, ${p.horas_reales||0}, ${avance})">
       <td>
         <div style="font-weight:500;font-size:13px;">${p.proyecto}</div>
         <div style="font-size:10px;color:var(--text2);">${p.complejidad||''}</div>
@@ -331,6 +386,63 @@ async function cargarProyectadoVsReal() {
     </tr>`;
   }).join('');
 }
+
+
+let proyectoDetalleActual = null;
+
+async function verDetalle(proyId, proyNombre, tipoProyecto, complejidad, hProyectadas, hReales, avance) {
+  proyectoDetalleActual = proyId;
+  document.getElementById('det-nombre').textContent = proyNombre;
+  const tipoLabels = {externo:'Proyecto Externo',interno:'Proyecto Interno',desarrollo_producto:'Desarrollo de Producto',licitacion:'Licitación',edicion_planos:'Edición de Planos',otros:'Otros'};
+  document.getElementById('det-meta').textContent = (tipoLabels[tipoProyecto]||tipoProyecto||'—') + ' · ' + (complejidad||'—');
+  document.getElementById('det-proyectado').textContent = (hProyectadas||0)+'h';
+  document.getElementById('det-real').textContent = (hReales||0)+'h';
+  const avanceColor = avance >= 100 ? '#f87171' : avance >= 75 ? '#fbbf24' : '#6ee7b7';
+  document.getElementById('det-avance').textContent = (avance||0)+'%';
+  document.getElementById('det-avance').style.color = avanceColor;
+  document.getElementById('det-fases').innerHTML = '<div class="loading-text"><span class="spinner"></span>Cargando fases...</div>';
+  document.getElementById('modal-detalle').classList.add('open');
+
+  const fases = await consultar('detalle_proyecto', {proyecto_id: proyId});
+  if(!fases.length) {
+    document.getElementById('det-fases').innerHTML = '<div class="loading-text">No hay fases registradas.</div>';
+    return;
+  }
+  document.getElementById('det-fases').innerHTML = fases.map(f => {
+    const estimadas = parseFloat(f.horas_estimadas)||0;
+    const reales = parseFloat(f.horas_reales)||0;
+    const avanceFase = parseFloat(f.porcentaje_avance)||0;
+    const desv = parseFloat(f.desviacion)||0;
+    const color = avanceFase >= 100 ? '#f87171' : avanceFase >= 75 ? '#fbbf24' : '#6ee7b7';
+    const estadoClass = 'fase-estado-'+(f.estado||'pendiente');
+    return `<div class="fase-row">
+      <div class="fase-top">
+        <div class="fase-num">${f.orden}</div>
+        <div class="fase-nombre">${f.fase}</div>
+        <span class="fase-estado-badge ${estadoClass}">${f.estado||'pendiente'}</span>
+        ${desv > 0 ? `<span style="font-size:11px;color:var(--danger);font-family:'DM Mono',monospace;">+${desv}h</span>` : desv < 0 ? `<span style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;">${desv}h</span>` : ''}
+      </div>
+      <div class="fase-barra"><div class="fase-barra-fill" style="width:${Math.min(avanceFase,100)}%;background:${color};"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="fase-horas">
+          <div><span>Estimado</span> ${estimadas}h</div>
+          <div><span>Real</span> ${reales}h</div>
+          <div><span>Avance</span> <span style="color:${color};">${avanceFase}%</span></div>
+        </div>
+      </div>
+      ${f.ingenieros ? `<div class="fase-ings">👤 ${f.ingenieros}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function cerrarDetalle() {
+  document.getElementById('modal-detalle').classList.remove('open');
+  proyectoDetalleActual = null;
+}
+
+document.addEventListener('click', e => {
+  if(e.target === document.getElementById('modal-detalle')) cerrarDetalle();
+});
 
 async function recargar() {
   await Promise.all([

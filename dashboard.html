@@ -206,7 +206,20 @@
         </table>
       </div>
     </div>
-  
+  </div>
+
+  <!-- INFORME DIARIO + MENSUAL -->
+  <div class="grid2" style="margin-top:20px;">
+    <div class="card">
+      <div class="card-title">Ejecución de hoy</div>
+      <div id="informe-diario"><div class="loading-text"><span class="spinner"></span>Cargando...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Resumen mensual por ingeniero</div>
+      <div id="informe-mensual"><div class="loading-text"><span class="spinner"></span>Cargando...</div></div>
+    </div>
+  </div>
+
 <!-- MODAL DETALLE PROYECTO -->
 <div class="modal-overlay" id="modal-detalle">
   <div class="modal-detalle">
@@ -319,22 +332,46 @@ async function cargarCargaIngenieros() {
   const data = await consultar('carga_ingenieros');
   const container = document.getElementById('ing-list');
   if(!data.length) { container.innerHTML='<div class="loading-text">Sin datos</div>'; return; }
-  const horasDisponibles = 8.75 * 22;
   container.innerHTML = data.map((ing, idx) => {
     const ejecutadas = parseFloat(ing.horas_ejecutadas_mes)||0;
-    const pct = Math.min(Math.round(ejecutadas/horasDisponibles*100), 100);
-    const color = pct > 90 ? '#f87171' : pct > 70 ? '#fbbf24' : '#6ee7b7';
+    const disponibles = parseFloat(ing.horas_disponibles_mes)||175;
+    const proyectadas = parseFloat(ing.horas_proyectadas_total)||0;
+    const proyectos = parseInt(ing.proyectos_activos)||0;
+    const pctEjec = Math.min(Math.round(ejecutadas/disponibles*100), 150);
+    const pctProy = Math.min(Math.round(proyectadas/disponibles*100), 150);
+    const color = pctEjec > 100 ? '#f87171' : pctEjec > 80 ? '#fbbf24' : '#6ee7b7';
     const iniciales = ing.ingeniero.split(' ').map(n=>n[0]).slice(0,2).join('');
-    return `<div class="ing-row">
-      <div class="avatar ${avColors[idx%5]}">${iniciales}</div>
-      <div class="ing-info">
-        <div class="ing-name">${ing.ingeniero}</div>
-        <div class="ing-cargo">${ing.cargo||'—'}</div>
+    return `<div class="ing-row" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px 0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="avatar ${avColors[idx%5]}">${iniciales}</div>
+        <div class="ing-info">
+          <div class="ing-name">${ing.ingeniero}</div>
+          <div class="ing-cargo">${ing.cargo||'—'} · ${proyectos} proyecto${proyectos!==1?'s':''} activo${proyectos!==1?'s':''}</div>
+        </div>
+        <div class="ing-horas">
+          <div class="ing-real" style="color:${color};">${ejecutadas}h</div>
+          <div class="ing-pct">${pctEjec}% ejecutado</div>
+        </div>
       </div>
-      <div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${color};"></div></div>
-      <div class="ing-horas">
-        <div class="ing-real" style="color:${color};">${ejecutadas}h</div>
-        <div class="ing-pct">${pct}% ocupado</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-left:40px;">
+        <div>
+          <div style="font-size:10px;color:var(--text2);margin-bottom:3px;font-family:'DM Mono',monospace;">EJECUTADO VS DISPONIBLE</div>
+          <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+            <div style="width:${Math.min(pctEjec,100)}%;height:100%;background:${color};border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-top:2px;">
+            <span>${ejecutadas}h real</span><span>${disponibles}h disp.</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text2);margin-bottom:3px;font-family:'DM Mono',monospace;">PROYECTADO TOTAL</div>
+          <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;">
+            <div style="width:${Math.min(pctProy,100)}%;height:100%;background:var(--accent2);border-radius:3px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-top:2px;">
+            <span>${proyectadas}h proy.</span><span>${pctProy}% carga</span>
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -458,13 +495,73 @@ document.addEventListener('click', e => {
   if(e.target === document.getElementById('modal-detalle')) cerrarDetalle();
 });
 
+async function cargarInformeDiario() {
+  const data = await consultar('informe_diario');
+  const container = document.getElementById('informe-diario');
+  if(!data.length) { container.innerHTML='<div class="loading-text">No hay registros hoy</div>'; return; }
+  const tipoLabels = {proyecto:'Proyecto',reunion:'Reunión',capacitacion:'Capacitación',administrativo:'Admin',otro:'Otro'};
+  const tipoColors = {proyecto:'var(--accent2)',reunion:'var(--accent)',capacitacion:'var(--warning)',administrativo:'var(--danger)',otro:'var(--text2)'};
+  let html = '';
+  let ingActual = '';
+  let totalIng = 0;
+  data.forEach(r => {
+    if(r.ingeniero !== ingActual) {
+      if(ingActual) html += `<div style="font-size:10px;color:var(--text2);text-align:right;font-family:'DM Mono',monospace;padding-bottom:6px;">${totalIng}h total</div>`;
+      ingActual = r.ingeniero;
+      totalIng = 0;
+      html += `<div class="inf-ing"><span>${r.ingeniero}</span><span style="font-size:10px;color:var(--text2);">${r.cargo||''}</span></div>`;
+    }
+    totalIng += parseFloat(r.horas_reales)||0;
+    html += `<div class="inf-row">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;color:${tipoColors[r.tipo]||'var(--text2)'};">${tipoLabels[r.tipo]||r.tipo}</span>
+        <span class="inf-horas">${parseFloat(r.horas_reales||0).toFixed(1)}h</span>
+      </div>
+      <div class="inf-detail">${r.proyecto||'—'}${r.fase?' · '+r.fase:''}</div>
+      ${r.tarea ? `<div style="font-size:11px;color:var(--text2);">↳ ${r.tarea}</div>` : ''}
+    </div>`;
+  });
+  if(ingActual) html += `<div style="font-size:10px;color:var(--text2);text-align:right;font-family:'DM Mono',monospace;padding-bottom:6px;">${totalIng.toFixed(1)}h total</div>`;
+  container.innerHTML = html;
+}
+
+async function cargarInformeMensual() {
+  const data = await consultar('informe_mensual');
+  const container = document.getElementById('informe-mensual');
+  if(!data.length) { container.innerHTML='<div class="loading-text">Sin datos este mes</div>'; return; }
+  const tipoLabels = {proyecto:'Proyecto',reunion:'Reunión',capacitacion:'Capacitación',administrativo:'Admin',otro:'Otro'};
+  let html = '';
+  let ingActual = '';
+  let totalIng = 0;
+  data.forEach(r => {
+    if(r.ingeniero !== ingActual) {
+      if(ingActual) html += `<div style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;text-align:right;margin-bottom:8px;">${totalIng.toFixed(1)}h este mes</div>`;
+      ingActual = r.ingeniero;
+      totalIng = 0;
+      html += `<div class="mes-ing">👤 ${r.ingeniero} <span style="font-size:10px;color:var(--text2);font-weight:400;">${r.cargo||''}</span></div>`;
+    }
+    totalIng += parseFloat(r.horas_totales)||0;
+    html += `<div class="inf-row">
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-size:12px;font-weight:500;">${r.proyecto||tipoLabels[r.tipo]||'—'}</span>
+        <span class="inf-horas">${parseFloat(r.horas_totales||0).toFixed(1)}h</span>
+      </div>
+      ${r.fase ? `<div class="inf-detail">↳ ${r.fase} · ${r.registros} registro${r.registros!=1?'s':''}</div>` : ''}
+    </div>`;
+  });
+  if(ingActual) html += `<div style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;text-align:right;margin-bottom:8px;">${totalIng.toFixed(1)}h este mes</div>`;
+  container.innerHTML = html;
+}
+
 async function recargar() {
   await Promise.all([
     cargarResumen(),
     cargarHorasDept(),
     cargarCargaIngenieros(),
     cargarHorasActividad(),
-    cargarProyectadoVsReal()
+    cargarProyectadoVsReal(),
+    cargarInformeDiario(),
+    cargarInformeMensual()
   ]);
 }
 

@@ -632,35 +632,42 @@ async function verDetalleIng(ingId, ingNombre, ingCargo, ejecutadas, proyectadas
 
   const html = Object.values(proyMap).map(p => {
     const totalProy = p.fases.reduce((s,f) => s + parseFloat(f.horas_ingeniero||0), 0);
-    const fasesHtml = p.fases.filter(f => parseFloat(f.horas_ingeniero||0) > 0).map(f => {
+    const todasFases = p.fases;
+    
+    const fasesHtml = todasFases.map(f => {
       const hIng = parseFloat(f.horas_ingeniero||0);
       const hEst = parseFloat(f.horas_estimadas||0);
       const ingEnProy = parseInt(f.ingenieros_en_proyecto)||1;
       const hCorresponde = hEst > 0 ? Math.round(hEst/ingEnProy*10)/10 : 0;
       const pct = hCorresponde > 0 ? Math.min(Math.round(hIng/hCorresponde*100), 150) : 0;
       const color = pct > 100 ? '#f87171' : pct === 100 ? '#4ade80' : pct >= 75 ? '#fbbf24' : '#6ee7b7';
-      return `<div class="fase-ing-row">
-        <div class="fase-ing-nombre">${f.orden}. ${f.fase}</div>
-        <div style="flex:1;margin:0 10px;height:4px;background:var(--bg);border-radius:2px;overflow:hidden;">
-          <div style="width:${Math.min(pct,100)}%;height:100%;background:${color};border-radius:2px;"></div>
+      return `<div style="display:grid;grid-template-columns:140px 1fr 60px 50px;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bg);">
+        <div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.orden}. ${f.fase}</div>
+        <div style="height:5px;background:var(--bg);border-radius:3px;overflow:hidden;">
+          <div style="width:${Math.min(pct,100)}%;height:100%;background:${color};border-radius:3px;transition:width .4s;"></div>
         </div>
-        <div class="fase-ing-horas">${hIng}h</div>
-        <div class="fase-ing-pct">/ ${hCorresponde}h</div>
+        <div style="font-size:11px;font-family:'DM Mono',monospace;color:${hIng>0?color:'var(--text2)'};text-align:right;">${hIng}h</div>
+        <div style="font-size:10px;color:var(--text2);text-align:right;">/ ${hCorresponde}h</div>
       </div>`;
     }).join('');
 
-    return `<div class="proy-block">
-      <div class="proy-block-header">
+    const estadoColor = p.estado==='en_curso'?'var(--accent)':p.estado==='completado'?'var(--success)':'var(--text2)';
+    
+    return `<div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border);">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
         <div>
-          <div class="proy-block-nombre">${p.nombre}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px;">${p.estado||''}</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text);">${p.nombre}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+            <span style="font-size:10px;color:${estadoColor};text-transform:uppercase;letter-spacing:.04em;">${p.estado||''}</span>
+            ${p.tipo ? `<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(129,140,248,.15);color:var(--accent2);">${TIPO_LABELS_ING[p.tipo]||p.tipo}</span>` : ''}
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          ${p.tipo ? `<span class="proy-block-tipo">${TIPO_LABELS_ING[p.tipo]||p.tipo}</span>` : ''}
-          <span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--accent);">${totalProy.toFixed(1)}h</span>
+        <div style="text-align:right;">
+          <div style="font-size:16px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent);">${totalProy.toFixed(1)}h</div>
+          <div style="font-size:10px;color:var(--text2);">mis horas</div>
         </div>
       </div>
-      ${fasesHtml || '<div style="font-size:12px;color:var(--text2);">Sin horas registradas en fases</div>'}
+      ${todasFases.length > 0 ? fasesHtml : '<div style="font-size:12px;color:var(--text2);padding:6px 0;">Sin fases definidas</div>'}
     </div>`;
   }).join('');
 

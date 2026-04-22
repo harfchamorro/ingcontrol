@@ -358,7 +358,12 @@ async function cargarHorasDept() {
 }
 
 async function cargarCargaIngenieros() {
-  const data = await consultar('carga_ingenieros');
+  let data = [];
+  try {
+    const res = await fetch(API, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'carga_ingenieros'})});
+    const d = await res.json();
+    data = Array.isArray(d) ? d : (d.data ? [].concat(d.data) : []);
+  } catch(e) { data = []; }
   const container = document.getElementById('ing-list');
   if(!data.length) { container.innerHTML='<div class="loading-text">Sin datos</div>'; return; }
   container.innerHTML = data.map((ing, idx) => {

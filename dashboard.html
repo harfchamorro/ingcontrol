@@ -600,10 +600,10 @@ async function verDetalleIng(ingId, ingNombre, ingCargo, ejecutadas, proyectadas
 
   let data = [];
   try {
-    const res = await fetch('https://primary-production-420b7.up.railway.app/webhook/dashboard', {
+    const res = await fetch('https://primary-production-420b7.up.railway.app/webhook/detalle-ingeniero', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({accion:'detalle_ingeniero', ingeniero_id: ingId})
+      body:JSON.stringify({ingeniero_id: ingId})
     });
     const d = await res.json();
     data = Array.isArray(d) ? d : (d.data ? [].concat(d.data) : []);

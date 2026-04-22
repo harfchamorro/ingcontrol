@@ -220,6 +220,35 @@
     </div>
   </div>
 
+<!-- MODAL DETALLE INGENIERO -->
+<div class="modal-overlay" id="modal-ing">
+  <div class="modal-detalle modal-ing">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:18px;font-weight:600;" id="ing-det-nombre">—</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;" id="ing-det-cargo">—</div>
+      </div>
+      <button class="modal-close" onclick="cerrarDetalleIng()">✕</button>
+    </div>
+    <div class="resumen-fases" style="margin-bottom:20px;">
+      <div class="resumen-item">
+        <div class="resumen-item-val green" id="ing-det-ejecutadas">—</div>
+        <div class="resumen-item-label">Horas ejecutadas</div>
+      </div>
+      <div class="resumen-item">
+        <div class="resumen-item-val purple" id="ing-det-proyectadas">—</div>
+        <div class="resumen-item-label">Horas proyectadas</div>
+      </div>
+      <div class="resumen-item">
+        <div class="resumen-item-val yellow" id="ing-det-proyectos">—</div>
+        <div class="resumen-item-label">Proyectos activos</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Detalle por proyecto y fase</div>
+    <div id="ing-det-proyectos-list"><div class="loading-text"><span class="spinner"></span>Cargando...</div></div>
+  </div>
+</div>
+
 <!-- MODAL DETALLE PROYECTO -->
 <div class="modal-overlay" id="modal-detalle">
   <div class="modal-detalle">
@@ -341,7 +370,7 @@ async function cargarCargaIngenieros() {
     const pctProy = Math.min(Math.round(proyectadas/disponibles*100), 150);
     const color = pctEjec > 100 ? '#f87171' : pctEjec > 80 ? '#fbbf24' : '#6ee7b7';
     const iniciales = ing.ingeniero.split(' ').map(n=>n[0]).slice(0,2).join('');
-    return `<div class="ing-row" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px 0;">
+    return `<div class="ing-row" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px 0;cursor:pointer;" onclick="verDetalleIng(${ing.id||0}, '${(ing.ingeniero||'').replace(/'/g,"\'")}', '${(ing.cargo||'').replace(/'/g,"\'")}', ${ejecutadas}, ${proyectadas}, ${proyectos})">
       <div style="display:flex;align-items:center;gap:10px;">
         <div class="avatar ${avColors[idx%5]}">${iniciales}</div>
         <div class="ing-info">
@@ -552,6 +581,94 @@ async function cargarInformeMensual() {
   if(ingActual) html += `<div style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;text-align:right;margin-bottom:8px;">${totalIng.toFixed(1)}h este mes</div>`;
   container.innerHTML = html;
 }
+
+const TIPO_LABELS_ING = {externo:'Externo',interno:'Interno',desarrollo_producto:'Desarrollo',licitacion:'Licitación',edicion_planos:'Ed.Planos',otros:'Otros'};
+
+async function verDetalleIng(ingId, ingNombre, ingCargo, ejecutadas, proyectadas, proyectos) {
+  document.getElementById('ing-det-nombre').textContent = ingNombre;
+  document.getElementById('ing-det-cargo').textContent = ingCargo||'—';
+  document.getElementById('ing-det-ejecutadas').textContent = ejecutadas+'h';
+  document.getElementById('ing-det-proyectadas').textContent = proyectadas+'h';
+  document.getElementById('ing-det-proyectos').textContent = proyectos;
+  document.getElementById('ing-det-proyectos-list').innerHTML = '<div class="loading-text"><span class="spinner"></span>Cargando...</div>';
+  document.getElementById('modal-ing').classList.add('open');
+
+  let data = [];
+  try {
+    const res = await fetch('https://primary-production-420b7.up.railway.app/webhook/dashboard', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({accion:'detalle_ingeniero', ingeniero_id: ingId})
+    });
+    const d = await res.json();
+    data = Array.isArray(d) ? d : (d.data ? [].concat(d.data) : []);
+  } catch(e) { data = []; }
+
+  if(!data.length) {
+    document.getElementById('ing-det-proyectos-list').innerHTML = '<div class="loading-text">No hay actividad registrada.</div>';
+    return;
+  }
+
+  // Agrupar por proyecto
+  const proyMap = {};
+  data.forEach(r => {
+    if(!proyMap[r.proyecto_id]) {
+      proyMap[r.proyecto_id] = {
+        nombre: r.proyecto,
+        tipo: r.tipo_proyecto,
+        estado: r.estado,
+        fases: []
+      };
+    }
+    if(r.fase_id) {
+      proyMap[r.proyecto_id].fases.push(r);
+    }
+  });
+
+  const html = Object.values(proyMap).map(p => {
+    const totalProy = p.fases.reduce((s,f) => s + parseFloat(f.horas_ingeniero||0), 0);
+    const fasesHtml = p.fases.filter(f => parseFloat(f.horas_ingeniero||0) > 0).map(f => {
+      const hIng = parseFloat(f.horas_ingeniero||0);
+      const hEst = parseFloat(f.horas_estimadas||0);
+      const ingEnProy = parseInt(f.ingenieros_en_proyecto)||1;
+      const hCorresponde = hEst > 0 ? Math.round(hEst/ingEnProy*10)/10 : 0;
+      const pct = hCorresponde > 0 ? Math.min(Math.round(hIng/hCorresponde*100), 150) : 0;
+      const color = pct > 100 ? '#f87171' : pct === 100 ? '#4ade80' : pct >= 75 ? '#fbbf24' : '#6ee7b7';
+      return `<div class="fase-ing-row">
+        <div class="fase-ing-nombre">${f.orden}. ${f.fase}</div>
+        <div style="flex:1;margin:0 10px;height:4px;background:var(--bg);border-radius:2px;overflow:hidden;">
+          <div style="width:${Math.min(pct,100)}%;height:100%;background:${color};border-radius:2px;"></div>
+        </div>
+        <div class="fase-ing-horas">${hIng}h</div>
+        <div class="fase-ing-pct">/ ${hCorresponde}h</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="proy-block">
+      <div class="proy-block-header">
+        <div>
+          <div class="proy-block-nombre">${p.nombre}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;">${p.estado||''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${p.tipo ? `<span class="proy-block-tipo">${TIPO_LABELS_ING[p.tipo]||p.tipo}</span>` : ''}
+          <span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--accent);">${totalProy.toFixed(1)}h</span>
+        </div>
+      </div>
+      ${fasesHtml || '<div style="font-size:12px;color:var(--text2);">Sin horas registradas en fases</div>'}
+    </div>`;
+  }).join('');
+
+  document.getElementById('ing-det-proyectos-list').innerHTML = html;
+}
+
+function cerrarDetalleIng() {
+  document.getElementById('modal-ing').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if(e.target === document.getElementById('modal-ing')) cerrarDetalleIng();
+});
 
 async function recargar() {
   await Promise.all([

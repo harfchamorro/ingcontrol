@@ -424,16 +424,16 @@ async function verDetalle(proyId, proyNombre, tipoProyecto, complejidad, hProyec
   document.getElementById('det-fases').innerHTML = fases.map(f => {
     const estimadas = parseFloat(f.horas_estimadas)||0;
     const reales = parseFloat(f.horas_reales)||0;
-    const avanceFase = parseFloat(f.porcentaje_avance)||0;
-    const desv = parseFloat(f.desviacion)||0;
-    const color = avanceFase >= 100 ? '#f87171' : avanceFase >= 75 ? '#fbbf24' : '#6ee7b7';
+    const avanceFase = estimadas > 0 ? Math.round((reales/estimadas)*100*10)/10 : 0;
+    const desv = Math.round((reales - estimadas)*100)/100;
+    const color = avanceFase > 100 ? '#f87171' : avanceFase === 100 ? '#4ade80' : avanceFase >= 75 ? '#fbbf24' : '#6ee7b7';
     const estadoClass = 'fase-estado-'+(f.estado||'pendiente');
     return `<div class="fase-row">
       <div class="fase-top">
         <div class="fase-num">${f.orden}</div>
         <div class="fase-nombre">${f.nombre||f.fase||'—'}</div>
         <span class="fase-estado-badge ${estadoClass}">${f.estado||'pendiente'}</span>
-        ${desv > 0 ? `<span style="font-size:11px;color:var(--danger);font-family:'DM Mono',monospace;">+${desv}h</span>` : desv < 0 ? `<span style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;">${desv}h</span>` : ''}
+        ${reales > 0 && desv > 0 ? `<span style="font-size:11px;color:var(--danger);font-family:'DM Mono',monospace;">+${desv}h sobre estimado</span>` : reales > 0 && desv < 0 ? `<span style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;">${Math.abs(desv)}h por ejecutar</span>` : ''}
       </div>
       <div class="fase-barra"><div class="fase-barra-fill" style="width:${Math.min(avanceFase,100)}%;background:${color};"></div></div>
       <div style="display:flex;justify-content:space-between;align-items:center;">

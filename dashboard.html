@@ -406,7 +406,17 @@ async function verDetalle(proyId, proyNombre, tipoProyecto, complejidad, hProyec
   document.getElementById('det-fases').innerHTML = '<div class="loading-text"><span class="spinner"></span>Cargando fases...</div>';
   document.getElementById('modal-detalle').classList.add('open');
 
-  const fases = await consultar('detalle_proyecto', {proyecto_id: proyId});
+  // Usar el webhook de proyecto-fases que ya existe y funciona
+  let fases = [];
+  try {
+    const res = await fetch('https://primary-production-420b7.up.railway.app/webhook/proyecto-fases', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({accion:'listar', proyecto_id: proyId})
+    });
+    const d = await res.json();
+    fases = Array.isArray(d) ? d : (d.data ? [].concat(d.data) : []);
+  } catch(e) { fases = []; }
   if(!fases.length) {
     document.getElementById('det-fases').innerHTML = '<div class="loading-text">No hay fases registradas.</div>';
     return;

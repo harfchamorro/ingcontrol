@@ -431,7 +431,7 @@ async function verDetalle(proyId, proyNombre, tipoProyecto, complejidad, hProyec
     return `<div class="fase-row">
       <div class="fase-top">
         <div class="fase-num">${f.orden}</div>
-        <div class="fase-nombre">${f.fase}</div>
+        <div class="fase-nombre">${f.nombre||f.fase||'—'}</div>
         <span class="fase-estado-badge ${estadoClass}">${f.estado||'pendiente'}</span>
         ${desv > 0 ? `<span style="font-size:11px;color:var(--danger);font-family:'DM Mono',monospace;">+${desv}h</span>` : desv < 0 ? `<span style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;">${desv}h</span>` : ''}
       </div>

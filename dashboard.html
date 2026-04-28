@@ -574,26 +574,59 @@ async function cargarInformeMensual() {
   const container = document.getElementById('informe-mensual');
   if(!data.length) { container.innerHTML='<div class="loading-text">Sin datos este mes</div>'; return; }
   const tipoLabels = {proyecto:'Proyecto',reunion:'Reunión',capacitacion:'Capacitación',administrativo:'Admin',otro:'Otro'};
-  let html = '';
-  let ingActual = '';
-  let totalIng = 0;
+  const tipoProy = {externo:'Externo',interno:'Interno',desarrollo_producto:'Desarrollo',licitacion:'Licitación',edicion_planos:'Ed.Planos',otros:'Otros'};
+  
+  // Agrupar por ingeniero
+  const ingMap = {};
   data.forEach(r => {
-    if(r.ingeniero !== ingActual) {
-      if(ingActual) html += `<div style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;text-align:right;margin-bottom:8px;">${totalIng.toFixed(1)}h este mes</div>`;
-      ingActual = r.ingeniero;
-      totalIng = 0;
-      html += `<div class="mes-ing">👤 ${r.ingeniero} <span style="font-size:10px;color:var(--text2);font-weight:400;">${r.cargo||''}</span></div>`;
-    }
-    totalIng += parseFloat(r.horas_totales)||0;
-    html += `<div class="inf-row">
-      <div style="display:flex;justify-content:space-between;">
-        <span style="font-size:12px;font-weight:500;">${r.proyecto||tipoLabels[r.tipo]||'—'}</span>
-        <span class="inf-horas">${parseFloat(r.horas_totales||0).toFixed(1)}h</span>
-      </div>
-      ${r.fase ? `<div class="inf-detail">↳ ${r.fase} · ${r.registros} registro${r.registros!=1?'s':''}</div>` : ''}
-    </div>`;
+    if(!ingMap[r.ingeniero]) ingMap[r.ingeniero] = {cargo: r.cargo, total: 0, proyectos: {}};
+    ingMap[r.ingeniero].total += parseFloat(r.horas_totales)||0;
+    const key = r.proyecto||r.tipo;
+    if(!ingMap[r.ingeniero].proyectos[key]) ingMap[r.ingeniero].proyectos[key] = {tipo_proyecto: r.tipo_proyecto, tipo: r.tipo, fases: [], total: 0};
+    ingMap[r.ingeniero].proyectos[key].total += parseFloat(r.horas_totales)||0;
+    if(r.fase) ingMap[r.ingeniero].proyectos[key].fases.push({fase: r.fase, horas: parseFloat(r.horas_totales)||0, registros: r.registros});
   });
-  if(ingActual) html += `<div style="font-size:11px;color:var(--accent);font-family:'DM Mono',monospace;text-align:right;margin-bottom:8px;">${totalIng.toFixed(1)}h este mes</div>`;
+
+  let html = Object.entries(ingMap).map(([nombre, ing]) => {
+    const proyHtml = Object.entries(ing.proyectos).map(([pNombre, p]) => {
+      const fasesHtml = p.fases.map(f => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0 4px 12px;border-left:2px solid var(--border);">
+          <span style="font-size:11px;color:var(--text2);">↳ ${f.fase}</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:10px;color:var(--text2);">${f.registros} reg.</span>
+            <span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--accent);">${f.horas.toFixed(1)}h</span>
+          </div>
+        </div>`).join('');
+      return `<div style="background:var(--bg);border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${p.fases.length?'6px':'0'};">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;font-weight:500;color:var(--text);">${pNombre}</span>
+            ${p.tipo_proyecto ? `<span style="font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(129,140,248,.15);color:var(--accent2);">${tipoProy[p.tipo_proyecto]||p.tipo_proyecto}</span>` : `<span style="font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(110,231,183,.1);color:var(--accent);">${tipoLabels[p.tipo]||p.tipo}</span>`}
+          </div>
+          <span style="font-size:13px;font-family:'DM Mono',monospace;font-weight:600;color:var(--accent);">${p.total.toFixed(1)}h</span>
+        </div>
+        ${fasesHtml}
+      </div>`;
+    }).join('');
+
+    return `<div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;">${nombre.split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;">${nombre}</div>
+            <div style="font-size:11px;color:var(--text2);">${ing.cargo||''}</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent);">${ing.total.toFixed(1)}h</div>
+          <div style="font-size:10px;color:var(--text2);">este mes</div>
+        </div>
+      </div>
+      ${proyHtml}
+    </div>`;
+  }).join('');
+
   container.innerHTML = html;
 }
 

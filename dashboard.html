@@ -532,7 +532,7 @@ document.addEventListener('click', e => {
 async function cargarInformeDiario() {
   let data = [];
   try {
-    const res = await fetch('https://primary-production-420b7.up.railway.app/webhook/informes', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'informe_diario'})});
+    const res = await fetch('https://primary-production-420b7.up.railway.app/webhook/informe-diario', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'informe_diario'})});
     const d = await res.json();
     data = Array.isArray(d) ? d : (d.data ? [].concat(d.data) : []);
   } catch(e) { data = []; }
@@ -567,7 +567,7 @@ async function cargarInformeDiario() {
 async function cargarInformeMensual() {
   let data = [];
   try {
-    const res = await fetch('https://primary-production-420b7.up.railway.app/webhook/informes', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'informe_mensual'})});
+    const res = await fetch('https://primary-production-420b7.up.railway.app/webhook/informe-mensual', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'informe_mensual'})});
     const d = await res.json();
     data = Array.isArray(d) ? d : (d.data ? [].concat(d.data) : []);
   } catch(e) { data = []; }

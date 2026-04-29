@@ -529,38 +529,87 @@ document.addEventListener('click', e => {
   if(e.target === document.getElementById('modal-detalle')) cerrarDetalle();
 });
 
+let _diarioData = [];
+let _diarioPage = 0;
+const _diarioPageSize = 5;
+
 async function cargarInformeDiario() {
-  let data = [];
+  _diarioData = [];
+  _diarioPage = 0;
   try {
     const res = await fetch('https://primary-production-420b7.up.railway.app/webhook/informe-diario', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'informe_diario'})});
     const d = await res.json();
-    data = Array.isArray(d) ? d : (d.data ? [].concat(d.data) : []);
-  } catch(e) { data = []; }
+    _diarioData = Array.isArray(d) ? d : (d.data ? [].concat(d.data) : []);
+  } catch(e) { _diarioData = []; }
+  renderInformeDiario();
+}
+
+function renderInformeDiario() {
   const container = document.getElementById('informe-diario');
-  if(!data.length) { container.innerHTML='<div class="loading-text">No hay registros hoy</div>'; return; }
+  if(!_diarioData.length) { container.innerHTML='<div class="loading-text">No hay registros hoy</div>'; return; }
   const tipoLabels = {proyecto:'Proyecto',reunion:'Reunión',capacitacion:'Capacitación',administrativo:'Admin',otro:'Otro'};
   const tipoColors = {proyecto:'var(--accent2)',reunion:'var(--accent)',capacitacion:'var(--warning)',administrativo:'var(--danger)',otro:'var(--text2)'};
-  let html = '';
-  let ingActual = '';
-  let totalIng = 0;
-  data.forEach(r => {
-    if(r.ingeniero !== ingActual) {
-      if(ingActual) html += `<div style="font-size:10px;color:var(--text2);text-align:right;font-family:'DM Mono',monospace;padding-bottom:6px;">${totalIng}h total</div>`;
-      ingActual = r.ingeniero;
-      totalIng = 0;
-      html += `<div class="inf-ing"><span>${r.ingeniero}</span><span style="font-size:10px;color:var(--text2);">${r.cargo||''}</span></div>`;
-    }
-    totalIng += parseFloat(r.horas_reales)||0;
-    html += `<div class="inf-row">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:12px;color:${tipoColors[r.tipo]||'var(--text2)'};">${tipoLabels[r.tipo]||r.tipo}</span>
-        <span class="inf-horas">${parseFloat(r.horas_reales||0).toFixed(1)}h</span>
-      </div>
-      <div class="inf-detail">${r.proyecto||'—'}${r.fase?' · '+r.fase:''}</div>
-      ${r.tarea ? `<div style="font-size:11px;color:var(--text2);">↳ ${r.tarea}</div>` : ''}
-    </div>`;
+  const tipoProy = {externo:'Externo',interno:'Interno',desarrollo_producto:'Desarrollo',licitacion:'Licitación',edicion_planos:'Ed.Planos',otros:'Otros'};
+
+  // Group by ingeniero
+  const ingMap = {};
+  _diarioData.forEach(r => {
+    if(!ingMap[r.ingeniero]) ingMap[r.ingeniero] = {cargo: r.cargo, total: 0, registros: []};
+    ingMap[r.ingeniero].total += parseFloat(r.horas_reales)||0;
+    ingMap[r.ingeniero].registros.push(r);
   });
-  if(ingActual) html += `<div style="font-size:10px;color:var(--text2);text-align:right;font-family:'DM Mono',monospace;padding-bottom:6px;">${totalIng.toFixed(1)}h total</div>`;
+
+  const entries = Object.entries(ingMap);
+  const start = _diarioPage * _diarioPageSize;
+  const pageEntries = entries.slice(start, start + _diarioPageSize);
+  const total = entries.length;
+
+  let html = pageEntries.map(([nombre, ing]) => {
+    const regsHtml = ing.registros.map(r => `
+      <div style="display:grid;grid-template-columns:1fr auto;gap:4px;padding:6px 0;border-bottom:1px solid var(--bg);">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+            <span style="font-size:11px;padding:1px 6px;border-radius:6px;background:rgba(129,140,248,.15);color:${tipoColors[r.tipo]||'var(--text2)'};">${tipoLabels[r.tipo]||r.tipo}</span>
+            ${r.proyecto ? `<span style="font-size:12px;font-weight:500;color:var(--text);">${r.proyecto}</span>` : ''}
+            ${r.tipo_proyecto ? `<span style="font-size:10px;color:var(--accent2);">${tipoProy[r.tipo_proyecto]||''}</span>` : ''}
+          </div>
+          ${r.fase ? `<div style="font-size:11px;color:var(--accent2);">↳ ${r.fase}</div>` : ''}
+          ${r.tarea ? `<div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px;">↳ ${r.tarea}</div>` : ''}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent);">${parseFloat(r.horas_reales||0).toFixed(1)}h</div>
+        </div>
+      </div>`).join('');
+
+    return `<div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#0f2419;">${nombre.split(' ').map(n=>n[0]).slice(0,2).join('')}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;">${nombre}</div>
+            <div style="font-size:11px;color:var(--text2);">${ing.cargo||''}</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent);">${ing.total.toFixed(1)}h</div>
+          <div style="font-size:10px;color:var(--text2);">hoy</div>
+        </div>
+      </div>
+      ${regsHtml}
+    </div>`;
+  }).join('');
+
+  // Pagination
+  if(total > _diarioPageSize) {
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <span style="font-size:12px;color:var(--text2);">${start+1}-${Math.min(start+_diarioPageSize,total)} de ${total} ingenieros</span>
+      <div style="display:flex;gap:6px;">
+        ${_diarioPage > 0 ? `<button onclick="_diarioPage--;renderInformeDiario();" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">← Ant</button>` : ''}
+        ${start+_diarioPageSize < total ? `<button onclick="_diarioPage++;renderInformeDiario();" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">Sig →</button>` : ''}
+      </div>
+    </div>`;
+  }
+
   container.innerHTML = html;
 }
 
@@ -587,7 +636,15 @@ async function cargarInformeMensual() {
     if(r.fase) ingMap[r.ingeniero].proyectos[key].fases.push({fase: r.fase, horas: parseFloat(r.horas_totales)||0, registros: r.registros});
   });
 
-  let html = Object.entries(ingMap).map(([nombre, ing]) => {
+  const ingEntries = Object.entries(ingMap);
+  // Store for pagination
+  window._mensualData = ingEntries;
+  window._mensualPage = window._mensualPage || 0;
+  const mStart = window._mensualPage * 5;
+  const mEntries = ingEntries.slice(mStart, mStart + 5);
+  const mTotal = ingEntries.length;
+
+  let html = mEntries.map(([nombre, ing]) => {
     const proyHtml = Object.entries(ing.proyectos).map(([pNombre, p]) => {
       const fasesHtml = p.fases.map(f => `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0 4px 12px;border-left:2px solid var(--border);">
@@ -626,6 +683,17 @@ async function cargarInformeMensual() {
       ${proyHtml}
     </div>`;
   }).join('');
+
+  // Mensual pagination
+  if(mTotal > 5) {
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <span style="font-size:12px;color:var(--text2);">${mStart+1}-${Math.min(mStart+5,mTotal)} de ${mTotal} ingenieros</span>
+      <div style="display:flex;gap:6px;">
+        ${window._mensualPage > 0 ? `<button onclick="window._mensualPage--;cargarInformeMensual();" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">← Ant</button>` : ''}
+        ${mStart+5 < mTotal ? `<button onclick="window._mensualPage++;cargarInformeMensual();" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">Sig →</button>` : ''}
+      </div>
+    </div>`;
+  }
 
   container.innerHTML = html;
 }

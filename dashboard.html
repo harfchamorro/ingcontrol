@@ -173,9 +173,18 @@
     <div class="card">
       <div class="card-title">Horas por departamento solicitante</div>
       <div id="dept-bars"><div class="loading-text"><span class="spinner"></span>Cargando...</div></div>
-      <div style="margin-top:16px;">
-        <div class="chart-wrap" style="height:200px;">
-          <canvas id="chart-dept" role="img" aria-label="Horas por departamento"></canvas>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+        <div>
+          <div style="font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;text-align:center;">Horas ejecutadas</div>
+          <div class="chart-wrap" style="height:160px;">
+            <canvas id="chart-dept" role="img" aria-label="Horas por departamento"></canvas>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;text-align:center;">Proyectos activos</div>
+          <div class="chart-wrap" style="height:160px;">
+            <canvas id="chart-dept-proy" role="img" aria-label="Proyectos por departamento"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -372,6 +381,25 @@ async function cargarHorasDept() {
       labels: data.map(d=>labels[d.departamento]||d.departamento),
       datasets: [{
         data: data.map(d=>parseFloat(d.horas_ejecutadas)||0),
+        backgroundColor: data.map(d=>coloresDept[d.departamento]||'#8888a0'),
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  if(window.chartDeptProy) window.chartDeptProy.destroy();
+  const ctx2 = document.getElementById('chart-dept-proy').getContext('2d');
+  window.chartDeptProy = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d=>labels[d.departamento]||d.departamento),
+      datasets: [{
+        data: data.map(d=>parseInt(d.proyectos_activos)||0),
         backgroundColor: data.map(d=>coloresDept[d.departamento]||'#8888a0'),
         borderWidth: 0
       }]

@@ -324,16 +324,33 @@ async function cargarHorasDept() {
   const data = await consultar('horas_por_departamento', {mes: getMes(), anio: getAnio()});
   const container = document.getElementById('dept-bars');
   if(!data.length) { container.innerHTML='<div class="loading-text">Sin datos este período</div>'; return; }
-  const max = Math.max(...data.map(d=>parseFloat(d.horas_totales)||0));
+  const maxProy = Math.max(...data.map(d=>parseFloat(d.horas_proyectadas)||0));
+  const maxEjec = Math.max(...data.map(d=>parseFloat(d.horas_ejecutadas)||0));
+  const maxVal = Math.max(maxProy, maxEjec) || 1;
   const labels = {comercial:'Comercial',ingenieria:'Ingeniería',fabricacion:'Fabricación',interno:'Interno'};
   container.innerHTML = data.map(d => {
-    const h = parseFloat(d.horas_totales)||0;
-    const pct = max ? Math.round(h/max*100) : 0;
+    const hEjec = parseFloat(d.horas_ejecutadas)||0;
+    const hProy = parseFloat(d.horas_proyectadas)||0;
+    const pctEjec = Math.round(hEjec/maxVal*100);
+    const pctProy = Math.round(hProy/maxVal*100);
     const col = coloresDept[d.departamento]||'#8888a0';
-    return `<div class="bar-row">
-      <div class="bar-label">${labels[d.departamento]||d.departamento}</div>
-      <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${col};"></div></div>
-      <div class="bar-val" style="color:${col};">${h}h</div>
+    const proyActivos = parseInt(d.proyectos_activos)||0;
+    const totalProy = parseInt(d.total_proyectos)||0;
+    return `<div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="bar-label" style="margin:0;">${labels[d.departamento]||d.departamento}</span>
+          <span style="font-size:10px;color:var(--text2);">${proyActivos} activo${proyActivos!==1?'s':''} / ${totalProy} total</span>
+        </div>
+        <div style="display:flex;gap:10px;font-size:11px;font-family:'DM Mono',monospace;">
+          <span style="color:var(--text2);">Proy: <span style="color:var(--accent2);">${hProy}h</span></span>
+          <span style="color:var(--text2);">Ejec: <span style="color:${col};">${hEjec}h</span></span>
+        </div>
+      </div>
+      <div style="position:relative;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;height:100%;width:${pctProy}%;background:var(--accent2);opacity:0.25;border-radius:4px;"></div>
+        <div style="position:absolute;top:0;left:0;height:100%;width:${pctEjec}%;background:${col};border-radius:4px;"></div>
+      </div>
     </div>`;
   }).join('');
 
@@ -344,7 +361,7 @@ async function cargarHorasDept() {
     data: {
       labels: data.map(d=>labels[d.departamento]||d.departamento),
       datasets: [{
-        data: data.map(d=>parseFloat(d.horas_totales)||0),
+        data: data.map(d=>parseFloat(d.horas_ejecutadas)||0),
         backgroundColor: data.map(d=>coloresDept[d.departamento]||'#8888a0'),
         borderWidth: 0
       }]

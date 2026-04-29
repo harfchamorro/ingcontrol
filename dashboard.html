@@ -155,8 +155,16 @@
     <div class="stat-card"><div class="stat-label">Ingenieros activos</div><div class="stat-value green" id="s-ingenieros">—</div></div>
     <div class="stat-card"><div class="stat-label">Proyectos activos</div><div class="stat-value purple" id="s-proyectos">—</div></div>
     <div class="stat-card"><div class="stat-label">En cotización</div><div class="stat-value yellow" id="s-cotizacion">—</div></div>
-    <div class="stat-card"><div class="stat-label">Horas este mes</div><div class="stat-value green" id="s-horas-mes">—</div></div>
-    <div class="stat-card"><div class="stat-label">Horas esta semana</div><div class="stat-value purple" id="s-horas-semana">—</div></div>
+    <div class="stat-card">
+      <div class="stat-label">Horas este mes</div>
+      <div class="stat-value green" id="s-horas-mes">—</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:2px;">de <span id="s-horas-mes-proy" style="color:var(--accent2);">—</span> proyectadas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Horas esta semana</div>
+      <div class="stat-value purple" id="s-horas-semana">—</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:2px;">de <span id="s-horas-semana-proy" style="color:var(--accent2);">—</span> proyectadas</div>
+    </div>
     <div class="stat-card"><div class="stat-label">Registros hoy</div><div class="stat-value yellow" id="s-hoy">—</div></div>
   </div>
 
@@ -315,7 +323,9 @@ async function cargarResumen() {
   document.getElementById('s-proyectos').textContent = r.proyectos_activos||0;
   document.getElementById('s-cotizacion').textContent = r.proyectos_cotizacion||0;
   document.getElementById('s-horas-mes').textContent = (r.horas_mes_actual||0)+'h';
+  document.getElementById('s-horas-mes-proy').textContent = (r.horas_mes_proyectadas||0)+'h';
   document.getElementById('s-horas-semana').textContent = (r.horas_semana_actual||0)+'h';
+  document.getElementById('s-horas-semana-proy').textContent = (r.horas_semana_proyectadas||0)+'h';
   document.getElementById('s-hoy').textContent = r.registros_hoy||0;
   document.getElementById('periodo-label').textContent = `${meses[getMes()]} ${getAnio()} — métricas del departamento de ingeniería`;
 }

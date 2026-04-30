@@ -97,6 +97,9 @@
   .pct-mini{height:4px;background:var(--bg);border-radius:2px;overflow:hidden;margin-top:6px;}
   .pct-mini-fill{height:100%;border-radius:2px;}
   .empty-state{text-align:center;padding:60px 20px;color:var(--text2);font-size:13px;}
+  .gantt-bar.atrasada{border:2px dashed var(--danger) !important;opacity:.9;}
+  .gantt-bar.vencida{background:var(--danger) !important;opacity:.9;}
+  .atraso-icon{position:absolute;top:-8px;right:-4px;font-size:11px;z-index:10;}
 
   /* Modal de detalle de proyecto */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
@@ -559,15 +562,22 @@ function renderGantt() {
         const pct = f._pct;
         const barColor = pct>=100?'#4ade80':pct>=75?'#fbbf24':color;
 
+        // Detectar atrasos
+        const noIniciada = horasReal === 0 && f._inicio < today;
+        const noTerminada = horasReal < horasEst && horasEst > 0 && f._fin < today;
+        const claseAtraso = noTerminada ? 'vencida' : noIniciada ? 'atrasada' : '';
+        const finalBarColor = noTerminada ? 'var(--danger)' : barColor;
+        const atrasoTooltip = noTerminada ? ' ⚠ Vencida' : noIniciada ? ' ⚠ Sin iniciar' : '';
+
         html += `<tr>
-          <td class="gantt-td-fase-info" style="height:36px;">
-            <div class="fase-nombre">${f.orden||''} ${f.nombre}</div>
+          <td class="gantt-td-fase-info" style="height:36px;${noIniciada||noTerminada?'border-left:3px solid var(--danger);':''}">
+            <div class="fase-nombre">${f.orden||''} ${f.nombre}${noTerminada?' <span style="color:var(--danger);font-size:10px;">⚠ vencida</span>':noIniciada?' <span style="color:var(--warning);font-size:10px;">⚠ sin iniciar</span>':''}</div>
             <div class="fase-horas">${horasEst>0?horasEst+'h est.':'Sin horas'} ${horasReal>0?'· '+horasReal+'h real':''} · ${f._durDias}d</div>
           </td>
           <td class="gantt-td-fase-bar" style="height:36px;width:${totalWidth}px;">
             ${colSeps}${todayEl}
-            <div class="gantt-bar" style="left:${x}px;width:${w}px;background:${barColor};opacity:.87;"
-              onmouseenter="showTooltip(event,'${f.nombre}','${formatFecha(f._inicio)}','${formatFecha(f._fin)}','${horasEst}','${pct}')"
+            <div class="gantt-bar ${claseAtraso}" style="left:${x}px;width:${w}px;background:${finalBarColor};opacity:.87;"
+              onmouseenter="showTooltip(event,'${f.nombre}${atrasoTooltip}','${formatFecha(f._inicio)}','${formatFecha(f._fin)}','${horasEst}','${pct}')"
               onmouseleave="hideTooltip()" onmousemove="moveTooltip(event)">
               ${w>50?(horasEst>0?horasEst+'h':''):''}
             </div>

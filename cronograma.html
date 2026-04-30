@@ -336,78 +336,64 @@ function renderGantt() {
   const today = new Date();
   today.setHours(0,0,0,0);
 
+  // Sistema de coordenadas basado en días reales
+  // Fecha base = inicio del rango (lunes si semanas, día 1 si meses)
+  let baseDate;
+  const PX_POR_DIA = escala === 'semanas' ? 26 : 8; // píxeles por día
+
+  if(escala === 'semanas') {
+    baseDate = new Date(minDate);
+    while(baseDate.getDay() !== 1) baseDate.setDate(baseDate.getDate()-1);
+  } else {
+    baseDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+  }
+
+  function dateToDays(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    return Math.round((d.getTime() - baseDate.getTime()) / 86400000);
+  }
+
+  function dateToX(date) {
+    return Math.max(0, dateToDays(date) * PX_POR_DIA);
+  }
+
+  function durationToW(start, end) {
+    const days = Math.max(1, dateToDays(end) - dateToDays(start));
+    return Math.max(6, days * PX_POR_DIA);
+  }
+
   // Generar columnas de tiempo
   const cols = [];
   if(escala === 'semanas') {
-    // Por semanas — empezar en lunes
-    let cur = new Date(minDate);
-    while(cur.getDay() !== 1) cur.setDate(cur.getDate()-1);
-    while(cur <= maxDate) {
-      cols.push({label: formatFechaCorta(cur), date: new Date(cur), width:36});
+    let cur = new Date(baseDate);
+    const endLimit = new Date(maxDate); endLimit.setDate(endLimit.getDate()+7);
+    while(cur <= endLimit) {
+      cols.push({
+        label: formatFechaCorta(cur),
+        date: new Date(cur),
+        width: 7 * PX_POR_DIA
+      });
       cur.setDate(cur.getDate()+7);
     }
   } else {
-    // Por meses
-    let cur = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
-    while(cur <= maxDate) {
+    let cur = new Date(baseDate);
+    const endLimit = new Date(maxDate.getFullYear(), maxDate.getMonth()+1, 1);
+    while(cur <= endLimit) {
       const daysInMonth = new Date(cur.getFullYear(), cur.getMonth()+1, 0).getDate();
       cols.push({
         label: cur.toLocaleDateString('es-CO',{month:'short',year:'2-digit'}),
         date: new Date(cur),
-        daysInMonth,
-        width: Math.max(60, Math.round(daysInMonth * 2.2))
+        width: daysInMonth * PX_POR_DIA
       });
       cur.setMonth(cur.getMonth()+1);
     }
   }
 
-  const totalWidth = cols.reduce((s,c)=>s+c.width,0);
-
-  // Calcular acumulado de X por columna — usar las cols como referencia única
-  // Cada col representa 7 días (semanas) o N días (meses)
-  const colStarts = []; // {date, x}
-  let xAcc = 0;
-  cols.forEach(c => {
-    colStarts.push({date: c.date, x: xAcc, width: c.width, daysInMonth: c.daysInMonth||7});
-    xAcc += c.width;
-  });
-
-  function dateToX(date) {
-    const d = date instanceof Date ? date : new Date(date);
-    const dMs = d.getTime();
-    // Antes del inicio
-    if(dMs <= colStarts[0].date.getTime()) return 0;
-    // Después del fin
-    if(dMs >= colStarts[colStarts.length-1].date.getTime() + colStarts[colStarts.length-1].width * 86400000) return totalWidth;
-    // Encontrar el intervalo de columna usando la fecha de la siguiente col como fin real
-    for(let i = 0; i < colStarts.length; i++) {
-      const colStart = colStarts[i].date.getTime();
-      const colEnd = i+1 < colStarts.length
-        ? colStarts[i+1].date.getTime()
-        : colStart + (escala==='semanas' ? 7 : colStarts[i].daysInMonth||30) * 86400000;
-      if(dMs >= colStart && dMs < colEnd) {
-        const pct = (dMs - colStart) / (colEnd - colStart);
-        return colStarts[i].x + pct * colStarts[i].width;
-      }
-    }
-    return totalWidth;
-  }
-
-  function durationToW(start, end) {
-    const x1 = dateToX(start);
-    const x2 = dateToX(end);
-    return Math.max(4, x2 - x1);
-  }
+  const totalWidth = cols.reduce((s,c)=>s+c.width, 0);
 
   // Posición de hoy
   const todayX = dateToX(today);
-  // DEBUG
-  console.log('=== GANTT DEBUG ===');
-  console.log('today:', today.toDateString(), 'todayX:', todayX, 'totalWidth:', totalWidth);
-  colStarts.forEach((c,i) => console.log('col', i, c.date.toDateString(), 'x:', Math.round(c.x), 'w:', c.width));
-  if(proyConFechas[0] && proyConFechas[0].fases[0]) {
-    proyConFechas[0].fases.forEach(f => console.log('fase:', f.nombre, 'inicio:', f._inicio.toDateString(), 'fin:', f._fin.toDateString(), 'x:', Math.round(dateToX(f._inicio)), 'w:', Math.round(durationToW(f._inicio, f._fin))));
-  }
+
 
   // Stats
   const totalProyectos = proyConFechas.length;

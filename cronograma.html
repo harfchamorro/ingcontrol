@@ -417,6 +417,14 @@ function renderGantt() {
     return Math.max(6, dateToX(end) - dateToX(start));
   }
 
+  // DEBUG MESES
+  if(escala === 'meses') {
+    cols.forEach(c => console.log('COL:', c.label, 'x:', Math.round(c.x), 'w:', c.width, 'hab:', c.habiles, 'end:', c.endDate.toDateString()));
+    console.log('totalWidth:', totalWidth);
+    console.log('dateToX(2may):', dateToX(new Date(2026,4,2)));
+    console.log('dateToX(30abr):', dateToX(new Date(2026,3,30)));
+  }
+
   // Posición de hoy
   const todayX = dateToX(today);
 

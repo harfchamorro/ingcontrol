@@ -321,7 +321,7 @@ function renderGantt() {
   const proyConFechas = datos.map(d => {
     const p = d.proyecto;
     const fechaInicio = parseDate(p.fecha_inicio);
-    const ings = parseInt(p.ingenieros_asignados)||1;
+    const ings = parseInt(p.total_ingenieros)||1;
     const fases = calcularFechasFases(d.fases, fechaInicio, ings);
     const fechaFin = fases.length ? fases[fases.length-1]._fin : fechaInicio;
     return {proyecto:p, fases, fechaInicio, fechaFin};

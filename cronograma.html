@@ -44,10 +44,10 @@
   .gantt-scroll{overflow-x:auto;}
 
   /* GANTT TABLE */
-  .gantt-table{width:100%;border-collapse:collapse;min-width:900px;}
+  .gantt-table{width:100%;border-collapse:collapse;min-width:900px;table-layout:fixed;}
   .gantt-header{background:var(--surface2);border-bottom:1px solid var(--border);}
   .gantt-header th{padding:10px 0;font-size:10px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;font-weight:400;text-align:center;border-right:1px solid var(--border);}
-  .gantt-header th.col-info{text-align:left;padding:10px 16px;width:260px;min-width:260px;border-right:2px solid var(--border);}
+  .gantt-header th.col-info{text-align:left;padding:10px 16px;width:280px;min-width:280px;max-width:280px;border-right:2px solid var(--border);}
   .gantt-header th.col-time{min-width:36px;padding:10px 4px;}
 
   .gantt-project-row td{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);}
@@ -63,7 +63,7 @@
   .badge-otros{background:rgba(136,136,160,.15);color:var(--text2);}
 
   .gantt-fase-row td{padding:0;border-bottom:1px solid rgba(46,46,56,.5);}
-  .gantt-fase-row td.fase-info{padding:8px 16px 8px 28px;border-right:2px solid var(--border);vertical-align:middle;}
+  .gantt-fase-row td.fase-info{padding:8px 16px 8px 28px;border-right:2px solid var(--border);vertical-align:middle;width:280px;min-width:280px;max-width:280px;}
   .fase-nombre{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
   .fase-horas{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:2px;}
   .gantt-fase-row td.fase-cell{padding:6px 0;vertical-align:middle;position:relative;border-right:1px solid rgba(46,46,56,.3);}
@@ -417,14 +417,6 @@ function renderGantt() {
     return Math.max(6, dateToX(end) - dateToX(start));
   }
 
-  // DEBUG MESES
-  if(escala === 'meses') {
-    cols.forEach(c => console.log('COL:', c.label, 'x:', Math.round(c.x), 'w:', c.width, 'hab:', c.habiles, 'end:', c.endDate.toDateString()));
-    console.log('totalWidth:', totalWidth);
-    console.log('dateToX(2may):', dateToX(new Date(2026,4,2)));
-    console.log('dateToX(30abr):', dateToX(new Date(2026,3,30)));
-  }
-
   // Posición de hoy
   const todayX = dateToX(today);
 
@@ -507,18 +499,17 @@ function renderGantt() {
           <div class="fase-nombre">${f.orden||''} ${f.nombre}</div>
           <div class="fase-horas">${horasEst > 0 ? horasEst+'h est.' : 'Sin horas'} ${horasReal > 0 ? '· '+horasReal+'h real' : ''} · ${f._durDias}d</div>
         </td>
-        <td colspan="${cols.length}" style="padding:4px 0;position:relative;">
-          <div style="position:relative;height:26px;width:${totalWidth}px;">
+        <td colspan="${cols.length}" style="padding:0;position:relative;height:34px;">
+          <div style="position:absolute;top:0;left:0;right:0;bottom:0;">
             <div style="position:absolute;left:${todayX}px;top:0;bottom:0;width:2px;background:var(--danger);opacity:.6;z-index:5;"></div>
-            ${horasEst > 0 || true ? `
             <div class="gantt-bar" 
-              style="left:${x}px;width:${w}px;background:${color};opacity:.85;"
+              style="left:${x}px;width:${w}px;top:6px;background:${color};opacity:.85;"
               onmouseenter="showTooltip(event,'${f.nombre}','${formatFecha(f._inicio)}','${formatFecha(f._fin)}','${horasEst}','${pct}')"
               onmouseleave="hideTooltip()"
               onmousemove="moveTooltip(event)">
               ${w > 50 ? (horasEst > 0 ? horasEst+'h' : f._durDias+'d') : ''}
-            </div>` : ''}
-            ${wReal > 0 ? `<div class="gantt-bar gantt-bar-real" style="left:${x}px;width:${wReal}px;background:#4ade80;"></div>` : ''}
+            </div>
+            ${wReal > 0 ? `<div class="gantt-bar gantt-bar-real" style="left:${x}px;width:${wReal}px;top:6px;background:#4ade80;"></div>` : ''}
           </div>
         </td>
       </tr>`;

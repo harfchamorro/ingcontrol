@@ -482,7 +482,8 @@ function renderGantt() {
                 <span class="badge-tipo ${badgeClass}">${tipoLabel}</span>
                 <span class="estado-badge ${estadoClass}">${ESTADO_LABELS[p.estado]||p.estado||''}</span>
               </div>
-              <div class="project-meta">${fases.length} fases${fases.length?' · hasta '+formatFechaCorta(fases[fases.length-1]._fin):''}${p.total_ingenieros>0?' · '+p.total_ingenieros+' ing.':''}</div>
+              <div class="project-meta">${fases.length} fases${fases.length?' · hasta '+formatFechaCorta(fases[fases.length-1]._fin):''} · ${p.total_ingenieros||1} ing.</div>
+              ${p.ingenieros_asignados?`<div class="project-meta" style="color:var(--text2);font-size:10px;margin-top:1px;">${p.ingenieros_asignados}</div>`:''}
             </div>
           </div>
         </td>

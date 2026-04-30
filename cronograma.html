@@ -337,61 +337,65 @@ function renderGantt() {
   const nowColombia = new Date(new Date().toLocaleString('en-US', {timeZone: 'America/Bogota'}));
   const today = new Date(nowColombia.getFullYear(), nowColombia.getMonth(), nowColombia.getDate());
 
-  // Sistema de coordenadas basado en días reales
-  // Fecha base = inicio del rango (lunes si semanas, día 1 si meses)
+  // Sistema de coordenadas — las columnas definen el espacio
+  // Primero generamos columnas, luego derivamos coordenadas de ellas
+  const cols = [];
   let baseDate;
-  const PX_POR_DIA = escala === 'semanas' ? 18 : 8; // píxeles por día
 
   if(escala === 'semanas') {
+    // Empezar en el lunes anterior al minDate
     baseDate = new Date(minDate);
     while(baseDate.getDay() !== 1) baseDate.setDate(baseDate.getDate()-1);
-  } else {
-    baseDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
-  }
-
-  function dateToDays(date) {
-    const d = date instanceof Date ? date : new Date(date);
-    return Math.round((d.getTime() - baseDate.getTime()) / 86400000);
-  }
-
-  function dateToX(date) {
-    return Math.max(0, dateToDays(date) * PX_POR_DIA);
-  }
-
-  function durationToW(start, end) {
-    const days = Math.max(1, dateToDays(end) - dateToDays(start));
-    return Math.max(6, days * PX_POR_DIA);
-  }
-
-  // Generar columnas de tiempo
-  const cols = [];
-  if(escala === 'semanas') {
+    const PX_SEM = 126; // 18px * 7 días
     let cur = new Date(baseDate);
-    const endLimit = new Date(maxDate); endLimit.setDate(endLimit.getDate()+7);
+    const endLimit = new Date(maxDate); endLimit.setDate(endLimit.getDate()+14);
     while(cur <= endLimit) {
-      const finSemana = new Date(cur); finSemana.setDate(finSemana.getDate()+6);
-      cols.push({
-        label: formatFechaCorta(cur) + ' – ' + formatFechaCorta(finSemana),
-        date: new Date(cur),
-        width: 7 * PX_POR_DIA
-      });
+      const finSem = new Date(cur); finSem.setDate(finSem.getDate()+6);
+      cols.push({date: new Date(cur), endDate: new Date(finSem), width: PX_SEM,
+        label: formatFechaCorta(cur) + ' – ' + formatFechaCorta(finSem)});
       cur.setDate(cur.getDate()+7);
     }
   } else {
+    // Empezar en el 1ro del mes de minDate
+    baseDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+    const PX_DIA_MES = 8;
     let cur = new Date(baseDate);
-    const endLimit = new Date(maxDate.getFullYear(), maxDate.getMonth()+1, 1);
-    while(cur <= endLimit) {
+    const endLimit = new Date(maxDate.getFullYear(), maxDate.getMonth()+2, 1);
+    while(cur < endLimit) {
       const daysInMonth = new Date(cur.getFullYear(), cur.getMonth()+1, 0).getDate();
-      cols.push({
-        label: cur.toLocaleDateString('es-CO',{month:'short',year:'2-digit'}),
-        date: new Date(cur),
-        width: daysInMonth * PX_POR_DIA
-      });
+      const endOfMonth = new Date(cur.getFullYear(), cur.getMonth()+1, 0);
+      cols.push({date: new Date(cur), endDate: endOfMonth, width: daysInMonth * PX_DIA_MES,
+        label: cur.toLocaleDateString('es-CO',{month:'short',year:'2-digit'})});
       cur.setMonth(cur.getMonth()+1);
     }
   }
 
   const totalWidth = cols.reduce((s,c)=>s+c.width, 0);
+
+  // Acumulado de X por columna
+  let xAcc2 = 0;
+  cols.forEach(c => { c.x = xAcc2; xAcc2 += c.width; });
+
+  // dateToX: interpola dentro de la columna correcta
+  function dateToX(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    const dMs = d.getTime();
+    for(let i = 0; i < cols.length; i++) {
+      const c = cols[i];
+      const startMs = c.date.getTime();
+      const endMs = c.endDate.getTime() + 86400000; // fin exclusivo
+      if(dMs >= startMs && dMs < endMs) {
+        const pct = (dMs - startMs) / (endMs - startMs);
+        return c.x + pct * c.width;
+      }
+    }
+    if(dMs < cols[0].date.getTime()) return 0;
+    return totalWidth;
+  }
+
+  function durationToW(start, end) {
+    return Math.max(6, dateToX(end) - dateToX(start));
+  }
 
   // Posición de hoy
   const todayX = dateToX(today);

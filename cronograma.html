@@ -603,6 +603,53 @@ function moveTooltip(e) {
 }
 function hideTooltip() { document.getElementById('tooltip').style.display='none'; }
 
+function openModal(proyectoId) {
+  const item = allData.find(d => d.proyecto.id == proyectoId);
+  if(!item) return;
+  const {proyecto:p, fases} = item;
+  const TIPO_LABELS2 = {externo:'Externo',interno:'Interno',desarrollo_producto:'Desarrollo de Producto',licitacion:'Licitación',edicion_planos:'Edición de Planos',otros:'Otros'};
+  const horasEst  = fases.reduce((s,f)=>s+(parseFloat(f.horas_estimadas)||0),0);
+  const horasReal = fases.reduce((s,f)=>s+(parseFloat(f.horas_reales)||0),0);
+  const avance    = horasEst>0 ? (horasReal/horasEst*100).toFixed(1) : 0;
+  document.getElementById('modal-title').textContent = p.nombre;
+  document.getElementById('modal-sub').textContent = `Proyecto ${TIPO_LABELS2[p.tipo_proyecto]||p.tipo_proyecto||''} · ${p.complejidad||''} · ${p.ingenieros_asignados||'Sin ingenieros'}`;
+  document.getElementById('modal-proyectado').textContent = horasEst+'h';
+  document.getElementById('modal-real').textContent = horasReal.toFixed(1)+'h';
+  document.getElementById('modal-avance').textContent = avance+'%';
+  const fasesHTML = fases.map(f => {
+    const est  = parseFloat(f.horas_estimadas)||0;
+    const real = parseFloat(f.horas_reales)||0;
+    const pct  = est>0 ? Math.min(real/est*100, 100) : 0;
+    const pctDisplay = est>0 ? (real/est*100).toFixed(1) : 0;
+    const sobreEstimado = real > est && est > 0;
+    const estado = real >= est && est > 0 ? 'completada' : real > 0 ? 'en_curso' : 'pendiente';
+    const estadoLabel = {completada:'completada', en_curso:'en curso', pendiente:'pendiente'}[estado];
+    const barColor = sobreEstimado ? 'var(--danger)' : pct>=75 ? 'var(--success)' : pct>0 ? 'var(--accent)' : 'var(--border)';
+    return `<div class="modal-fase">
+      <div class="modal-fase-header">
+        <div class="modal-fase-name"><span class="modal-fase-num">${f.orden||''}</span>${f.nombre}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="modal-fase-badge ${estado}">${estadoLabel}</span>
+          ${sobreEstimado?`<span class="modal-fase-alerta" style="color:var(--danger);">+${(real-est).toFixed(1)}h sobre estimado</span>`:''}
+          ${estado==='en_curso'&&est>0?`<span class="modal-fase-alerta" style="color:var(--text2);">${(est-real).toFixed(1)}h por ejecutar</span>`:''}
+        </div>
+      </div>
+      <div class="modal-fase-bar-bg"><div class="modal-fase-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
+      <div class="modal-fase-meta">Estimado <span>${est}h</span> &nbsp; Real <span>${real}h</span> &nbsp; Avance <span style="color:${sobreEstimado?'var(--danger)':'var(--accent)'};">${pctDisplay}%</span></div>
+    </div>`;
+  }).join('');
+  document.getElementById('modal-fases').innerHTML = fasesHTML;
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+function closeModal(e) {
+  if(!e || e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').style.display = 'none';
+  }
+}
+
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal({target:document.getElementById('modal-overlay')}); });
+
 recargar();
 </script>
 </body>

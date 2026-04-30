@@ -3,6 +3,7 @@
     { "source": "/proyectos", "destination": "/proyectos.html" },
     { "source": "/actividades", "destination": "/actividades.html" },
     { "source": "/registro", "destination": "/registro.html" },
-    { "source": "/dashboard", "destination": "/dashboard.html" }
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/cronograma", "destination": "/cronograma.html" }
   ]
 }

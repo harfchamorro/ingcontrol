@@ -223,7 +223,7 @@ async function recargar() {
     // Cargar fases para cada proyecto
     const promises = proyectos.map(async p => {
       try {
-        const resF = await fetch(API_FASES, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({proyecto_id: p.id})});
+        const resF = await fetch(API_FASES, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion: 'listar', proyecto_id: p.id})});
         const rawF = await resF.json();
         const fases = Array.isArray(rawF) ? rawF : (rawF.data ? [].concat(rawF.data) : []);
         return {proyecto: p, fases};

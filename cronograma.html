@@ -401,6 +401,13 @@ function renderGantt() {
 
   // Posición de hoy
   const todayX = dateToX(today);
+  // DEBUG
+  console.log('=== GANTT DEBUG ===');
+  console.log('today:', today.toDateString(), 'todayX:', todayX, 'totalWidth:', totalWidth);
+  colStarts.forEach((c,i) => console.log('col', i, c.date.toDateString(), 'x:', Math.round(c.x), 'w:', c.width));
+  if(proyConFechas[0] && proyConFechas[0].fases[0]) {
+    proyConFechas[0].fases.forEach(f => console.log('fase:', f.nombre, 'inicio:', f._inicio.toDateString(), 'fin:', f._fin.toDateString(), 'x:', Math.round(dateToX(f._inicio)), 'w:', Math.round(durationToW(f._inicio, f._fin))));
+  }
 
   // Stats
   const totalProyectos = proyConFechas.length;

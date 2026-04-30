@@ -44,10 +44,10 @@
   .gantt-scroll{overflow-x:auto;}
 
   /* GANTT TABLE */
-  .gantt-table{width:100%;border-collapse:collapse;min-width:900px;table-layout:fixed;}
+  .gantt-table{border-collapse:collapse;}
   .gantt-header{background:var(--surface2);border-bottom:1px solid var(--border);}
   .gantt-header th{padding:10px 0;font-size:10px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;font-weight:400;text-align:center;border-right:1px solid var(--border);}
-  .gantt-header th.col-info{text-align:left;padding:10px 16px;width:280px;min-width:280px;max-width:280px;border-right:2px solid var(--border);}
+  .gantt-header th.col-info{text-align:left;padding:10px 16px;width:280px;min-width:280px;border-right:2px solid var(--border);}
   .gantt-header th.col-time{min-width:36px;padding:10px 4px;}
 
   .gantt-project-row td{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);}
@@ -63,7 +63,7 @@
   .badge-otros{background:rgba(136,136,160,.15);color:var(--text2);}
 
   .gantt-fase-row td{padding:0;border-bottom:1px solid rgba(46,46,56,.5);}
-  .gantt-fase-row td.fase-info{padding:8px 16px 8px 28px;border-right:2px solid var(--border);vertical-align:middle;width:280px;min-width:280px;max-width:280px;}
+  .gantt-fase-row td.fase-info{padding:8px 16px 8px 28px;border-right:2px solid var(--border);vertical-align:middle;width:280px;min-width:280px;}
   .fase-nombre{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
   .fase-horas{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:2px;}
   .gantt-fase-row td.fase-cell{padding:6px 0;vertical-align:middle;position:relative;border-right:1px solid rgba(46,46,56,.3);}
@@ -417,6 +417,10 @@ function renderGantt() {
     return Math.max(6, dateToX(end) - dateToX(start));
   }
 
+  // Ancho fijo de la tabla = col info + área de tiempo
+  const INFO_WIDTH = 280;
+  const TABLE_WIDTH = INFO_WIDTH + totalWidth;
+
   // Posición de hoy
   const todayX = dateToX(today);
 
@@ -438,7 +442,7 @@ function renderGantt() {
   `;
 
   // Construir tabla
-  let html = `<table class="gantt-table">
+  let html = `<table class="gantt-table" style="width:${TABLE_WIDTH}px;min-width:${TABLE_WIDTH}px;">
     <thead class="gantt-header">
       <tr>
         <th class="col-info">Proyecto / Fase</th>`;

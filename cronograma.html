@@ -265,13 +265,22 @@ async function recargar() {
 
     const selEstado = document.getElementById('filtro-estado');
     const selArea = document.getElementById('filtro-area');
-    const ESTADO_LABELS = {en_curso:'En curso',completado:'Completado',cancelado:'Cancelado',pausado:'Pausado',cotizacion:'Cotización'};
-
-    selEstado.innerHTML = '<option value="todos">Todos los estados</option>' +
-      estados.map(e => `<option value="${e}" ${e==='en_curso'?'selected':''}>${ESTADO_LABELS[e]||e}</option>`).join('');
-    const AREA_LABELS = {comercial:'Comercial',ingenieria:'Ingeniería propia',fabricacion:'Fabricación',interno:'Interno'};
-    selArea.innerHTML = '<option value="todos">Todas las áreas</option>' +
-      areas.map(a => `<option value="${a}">${AREA_LABELS[a]||a.charAt(0).toUpperCase()+a.slice(1)}</option>`).join('');
+    // Estados y áreas fijos según el formulario de proyectos
+    selEstado.innerHTML = `
+      <option value="todos">Todos los estados</option>
+      <option value="cotizacion">Cotización</option>
+      <option value="en_curso" selected>En curso</option>
+      <option value="pausado">Pausado</option>
+      <option value="completado">Completado</option>
+      <option value="cancelado">Cancelado</option>
+    `;
+    selArea.innerHTML = `
+      <option value="todos">Todas las áreas</option>
+      <option value="comercial">Comercial</option>
+      <option value="ingenieria">Ingeniería propia</option>
+      <option value="fabricacion">Fabricación</option>
+      <option value="interno">Interno</option>
+    `;
 
     const promises = proyectos.map(async p => {
       try {

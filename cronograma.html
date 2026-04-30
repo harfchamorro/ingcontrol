@@ -350,9 +350,10 @@ function renderGantt() {
     let cur = new Date(baseDate);
     const endLimit = new Date(maxDate); endLimit.setDate(endLimit.getDate()+14);
     while(cur <= endLimit) {
-      const finSem = new Date(cur); finSem.setDate(finSem.getDate()+6);
-      cols.push({date: new Date(cur), endDate: new Date(finSem), width: PX_SEM,
-        label: formatFechaCorta(cur) + ' – ' + formatFechaCorta(finSem)});
+      const finSemLabel = new Date(cur); finSemLabel.setDate(finSemLabel.getDate()+6);
+      const nextLunes = new Date(cur); nextLunes.setDate(nextLunes.getDate()+7);
+      cols.push({date: new Date(cur), endDate: nextLunes, width: PX_SEM,
+        label: formatFechaCorta(cur) + ' – ' + formatFechaCorta(finSemLabel)});
       cur.setDate(cur.getDate()+7);
     }
   } else {
@@ -363,8 +364,8 @@ function renderGantt() {
     const endLimit = new Date(maxDate.getFullYear(), maxDate.getMonth()+2, 1);
     while(cur < endLimit) {
       const daysInMonth = new Date(cur.getFullYear(), cur.getMonth()+1, 0).getDate();
-      const endOfMonth = new Date(cur.getFullYear(), cur.getMonth()+1, 0);
-      cols.push({date: new Date(cur), endDate: endOfMonth, width: daysInMonth * PX_DIA_MES,
+      const nextMonth = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+      cols.push({date: new Date(cur), endDate: nextMonth, width: daysInMonth * PX_DIA_MES,
         label: cur.toLocaleDateString('es-CO',{month:'short',year:'2-digit'})});
       cur.setMonth(cur.getMonth()+1);
     }
@@ -383,7 +384,7 @@ function renderGantt() {
     for(let i = 0; i < cols.length; i++) {
       const c = cols[i];
       const startMs = c.date.getTime();
-      const endMs = c.endDate.getTime() + 86400000; // fin exclusivo
+      const endMs = c.endDate.getTime(); // fin exclusivo (primer día del siguiente período)
       if(dMs >= startMs && dMs < endMs) {
         const pct = (dMs - startMs) / (endMs - startMs);
         return c.x + pct * c.width;

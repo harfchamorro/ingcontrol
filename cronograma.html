@@ -41,25 +41,25 @@
   .stat-mini-item{font-size:12px;color:var(--text2);}
   .stat-mini-item strong{color:var(--text);font-family:'DM Mono',monospace;}
 
-  /* Two-column flex layout — left fixed, right scrollable */
-  .gantt-layout{display:flex;overflow:hidden;}
-  .gantt-left{flex:0 0 var(--info-w);width:var(--info-w);border-right:2px solid var(--border);overflow:hidden;background:var(--surface);}
-  .gantt-right{flex:1;overflow-x:auto;}
-  .gantt-right-inner{position:relative;}
+  /* Gantt table layout */
+  .gantt-scroll-wrap{overflow-x:auto;}
+  .gantt-table{border-collapse:collapse;background:var(--surface);}
+  .gantt-table td,.gantt-table th{padding:0;margin:0;}
 
-  .gantt-left-header,.gantt-time-header{height:40px;background:var(--surface2);border-bottom:1px solid var(--border);}
-  .gantt-left-header{display:flex;align-items:center;padding:0 16px;font-size:10px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;}
-  .gantt-time-header{position:relative;}
-
+  /* Header row */
+  .gantt-th-info{background:var(--surface2);border-bottom:1px solid var(--border);border-right:2px solid var(--border);padding:0 16px;height:40px;font-size:10px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;vertical-align:middle;position:sticky;left:0;z-index:20;}
+  .gantt-th-time{background:var(--surface2);border-bottom:1px solid var(--border);height:40px;position:relative;vertical-align:top;}
   .gantt-col-label{position:absolute;top:0;height:40px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.03em;border-right:1px solid var(--border);padding:0 4px;text-align:center;overflow:hidden;}
 
-  /* Project rows */
-  .gantt-project-info{background:var(--surface2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);padding:7px 12px 7px 16px;display:flex;align-items:center;gap:8px;}
-  .gantt-project-bar-row{background:var(--surface2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);position:relative;}
+  /* Project header rows */
+  .gantt-td-proj-info{background:var(--surface2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);border-right:2px solid var(--border);padding:7px 12px 7px 14px;vertical-align:middle;position:sticky;left:0;z-index:10;}
+  .gantt-td-proj-bar{background:var(--surface2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);position:relative;vertical-align:middle;}
 
   /* Phase rows */
-  .gantt-fase-info{border-bottom:1px solid rgba(46,46,56,.5);padding:5px 12px 5px 24px;display:flex;flex-direction:column;justify-content:center;min-height:36px;}
-  .gantt-fase-bar-row{border-bottom:1px solid rgba(46,46,56,.5);position:relative;min-height:36px;}
+  .gantt-td-fase-info{border-bottom:1px solid rgba(46,46,56,.4);border-right:2px solid var(--border);padding:5px 12px 5px 22px;vertical-align:middle;position:sticky;left:0;z-index:10;background:var(--surface);}
+  .gantt-td-fase-bar{border-bottom:1px solid rgba(46,46,56,.4);position:relative;vertical-align:middle;}
+
+  .proj-info-inner{display:flex;align-items:center;gap:8px;}
 
   .fase-nombre{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .fase-horas{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:1px;}
@@ -405,25 +405,35 @@ function renderGantt() {
     ${currentTab==='capacidad'?'<div class="stat-mini-item" style="color:var(--accent2);">⚡ Ajustado por ingenieros asignados</div>':''}
   `;
 
-  // Separadores de columna (reutilizados en todas las filas)
   const colSeps = cols.map(c=>`<div class="col-sep" style="left:${c.x}px;"></div>`).join('');
   const todayEl = `<div class="today-line" style="left:${todayX}px;"></div>`;
+  const INFO_W = 280;
 
-  // Construir HTML de las dos columnas
-  let leftHTML  = `<div class="gantt-left-header">Proyecto / Fase</div>`;
-  let rightHTML  = `<div class="gantt-time-header" style="width:${totalWidth}px;">`;
-  rightHTML += cols.map(c=>`<div class="gantt-col-label" style="left:${c.x}px;width:${c.width}px;">${c.label}</div>`).join('');
-  rightHTML += `</div>`;
+  // Una sola tabla — garantiza alineación perfecta
+  let html = `<table class="gantt-table" style="width:${INFO_W+totalWidth}px;">
+    <colgroup>
+      <col style="width:${INFO_W}px;min-width:${INFO_W}px;">
+      <col style="width:${totalWidth}px;">
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="gantt-th-info">Proyecto / Fase</th>
+        <th class="gantt-th-time" style="width:${totalWidth}px;">
+          ${cols.map(c=>`<div class="gantt-col-label" style="left:${c.x}px;width:${c.width}px;">${c.label}</div>`).join('')}
+        </th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  const ESTADO_LABELS = {en_curso:'En curso',completado:'Completado',cancelado:'Cancelado',pausado:'Pausado',cotizacion:'Cotización'};
 
   proyConFechas.forEach(({proyecto:p, fases}) => {
     const color     = TIPO_COLORS[p.tipo_proyecto]||'#8888a0';
     const tipoLabel = TIPO_LABELS[p.tipo_proyecto]||p.tipo_proyecto||'—';
     const badgeClass  = `badge-${p.tipo_proyecto||'otros'}`;
     const estadoClass = `estado-${p.estado}`;
-    const ESTADO_LABELS = {en_curso:'En curso',completado:'Completado',cancelado:'Cancelado',pausado:'Pausado',cotizacion:'Cotización'};
 
     if(vista === 'consolidado') {
-      // Vista consolidada: una sola barra por proyecto (inicio primera fase → fin última fase)
       const primerFase = fases[0];
       const ultimaFase = fases[fases.length-1];
       if(!primerFase) return;
@@ -434,49 +444,52 @@ function renderGantt() {
       const pctP = horasEstTotal>0 ? Math.min(Math.round(horasRealTotal/horasEstTotal*100),100) : 0;
       const wRealP = horasEstTotal>0 ? Math.min(wP*(horasRealTotal/horasEstTotal), wP) : 0;
       const barColorP = pctP>=100?'#4ade80':pctP>=75?'#fbbf24':color;
-      const rowH = 44;
 
-      leftHTML += `<div class="gantt-project-info" style="min-height:${rowH}px;">
-        <div style="width:4px;height:30px;border-radius:2px;background:${color};flex-shrink:0;"></div>
-        <div style="overflow:hidden;min-width:0;">
-          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
-            <span class="project-label">${p.nombre}</span>
-            <span class="badge-tipo ${badgeClass}">${tipoLabel}</span>
-            <span class="estado-badge ${estadoClass}">${ESTADO_LABELS[p.estado]||p.estado||''}</span>
+      html += `<tr>
+        <td class="gantt-td-proj-info" style="height:44px;">
+          <div class="proj-info-inner">
+            <div style="width:4px;height:30px;border-radius:2px;background:${color};flex-shrink:0;"></div>
+            <div style="overflow:hidden;min-width:0;">
+              <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+                <span class="project-label">${p.nombre}</span>
+                <span class="badge-tipo ${badgeClass}">${tipoLabel}</span>
+                <span class="estado-badge ${estadoClass}">${ESTADO_LABELS[p.estado]||p.estado||''}</span>
+              </div>
+              <div class="project-meta">${horasEstTotal}h est. · ${pctP}% avance · ${fases.length} fases</div>
+            </div>
           </div>
-          <div class="project-meta">${horasEstTotal}h est. · ${pctP}% avance · ${fases.length} fases</div>
-        </div>
-      </div>`;
-
-      rightHTML += `<div class="gantt-fase-bar-row" style="width:${totalWidth}px;min-height:${rowH}px;">
-        ${colSeps}${todayEl}
-        <div class="gantt-bar" style="left:${xP}px;width:${wP}px;top:10px;height:24px;background:${barColorP};opacity:.87;"
-          onmouseenter="showTooltip(event,'${p.nombre}','${formatFecha(primerFase._inicio)}','${formatFecha(ultimaFase._fin)}','${horasEstTotal}','${pctP}')"
-          onmouseleave="hideTooltip()" onmousemove="moveTooltip(event)">
-          ${wP>80?p.nombre:''}
-        </div>
-        ${wRealP>0?`<div class="gantt-bar-real" style="left:${xP}px;width:${wRealP}px;top:10px;height:24px;background:#4ade80;"></div>`:''}
-      </div>`;
+        </td>
+        <td class="gantt-td-proj-bar" style="height:44px;width:${totalWidth}px;">
+          ${colSeps}${todayEl}
+          <div class="gantt-bar" style="left:${xP}px;width:${wP}px;top:10px;height:24px;background:${barColorP};opacity:.87;"
+            onmouseenter="showTooltip(event,'${p.nombre}','${formatFecha(primerFase._inicio)}','${formatFecha(ultimaFase._fin)}','${horasEstTotal}','${pctP}')"
+            onmouseleave="hideTooltip()" onmousemove="moveTooltip(event)">
+            ${wP>80?p.nombre:''}
+          </div>
+          ${wRealP>0?`<div class="gantt-bar-real" style="left:${xP}px;width:${wRealP}px;top:10px;height:5px;background:#4ade80;"></div>`:''}
+        </td>
+      </tr>`;
 
     } else {
-      // Vista por proyectos: desglose de fases
-      const projRowH = 40;
-      leftHTML += `<div class="gantt-project-info" style="min-height:${projRowH}px;">
-        <div style="width:4px;height:26px;border-radius:2px;background:${color};flex-shrink:0;"></div>
-        <div style="overflow:hidden;min-width:0;">
-          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
-            <span class="project-label">${p.nombre}</span>
-            <span class="badge-tipo ${badgeClass}">${tipoLabel}</span>
-            <span class="estado-badge ${estadoClass}">${ESTADO_LABELS[p.estado]||p.estado||''}</span>
+      // Fila header del proyecto
+      html += `<tr>
+        <td class="gantt-td-proj-info" style="height:40px;">
+          <div class="proj-info-inner">
+            <div style="width:4px;height:26px;border-radius:2px;background:${color};flex-shrink:0;"></div>
+            <div style="overflow:hidden;min-width:0;">
+              <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+                <span class="project-label">${p.nombre}</span>
+                <span class="badge-tipo ${badgeClass}">${tipoLabel}</span>
+                <span class="estado-badge ${estadoClass}">${ESTADO_LABELS[p.estado]||p.estado||''}</span>
+              </div>
+              <div class="project-meta">${fases.length} fases${fases.length?' · hasta '+formatFechaCorta(fases[fases.length-1]._fin):''}</div>
+            </div>
           </div>
-          <div class="project-meta">
-            ${fases.length} fases${fases.length?' · hasta '+formatFechaCorta(fases[fases.length-1]._fin):''}
-          </div>
-        </div>
-      </div>`;
+        </td>
+        <td class="gantt-td-proj-bar" style="height:40px;width:${totalWidth}px;">${colSeps}${todayEl}</td>
+      </tr>`;
 
-      rightHTML += `<div class="gantt-project-bar-row" style="min-height:${projRowH}px;width:${totalWidth}px;">${colSeps}${todayEl}</div>`;
-
+      // Filas de fases
       fases.forEach(f => {
         const horasEst  = parseFloat(f.horas_estimadas)||0;
         const horasReal = parseFloat(f.horas_reales)||0;
@@ -486,31 +499,27 @@ function renderGantt() {
         const pct = f._pct;
         const barColor = pct>=100?'#4ade80':pct>=75?'#fbbf24':color;
 
-        leftHTML += `<div class="gantt-fase-info">
-          <div class="fase-nombre">${f.orden||''} ${f.nombre}</div>
-          <div class="fase-horas">${horasEst>0?horasEst+'h est.':'Sin horas'} ${horasReal>0?'· '+horasReal+'h real':''} · ${f._durDias}d</div>
-        </div>`;
-
-        rightHTML += `<div class="gantt-fase-bar-row" style="width:${totalWidth}px;">
-          ${colSeps}${todayEl}
-          <div class="gantt-bar" style="left:${x}px;width:${w}px;background:${barColor};opacity:.87;"
-            onmouseenter="showTooltip(event,'${f.nombre}','${formatFecha(f._inicio)}','${formatFecha(f._fin)}','${horasEst}','${pct}')"
-            onmouseleave="hideTooltip()" onmousemove="moveTooltip(event)">
-            ${w>50?(horasEst>0?horasEst+'h':''):''}
-          </div>
-          ${wReal>0?`<div class="gantt-bar-real" style="left:${x}px;width:${wReal}px;background:#4ade80;"></div>`:''}
-        </div>`;
+        html += `<tr>
+          <td class="gantt-td-fase-info" style="height:36px;">
+            <div class="fase-nombre">${f.orden||''} ${f.nombre}</div>
+            <div class="fase-horas">${horasEst>0?horasEst+'h est.':'Sin horas'} ${horasReal>0?'· '+horasReal+'h real':''} · ${f._durDias}d</div>
+          </td>
+          <td class="gantt-td-fase-bar" style="height:36px;width:${totalWidth}px;">
+            ${colSeps}${todayEl}
+            <div class="gantt-bar" style="left:${x}px;width:${w}px;background:${barColor};opacity:.87;"
+              onmouseenter="showTooltip(event,'${f.nombre}','${formatFecha(f._inicio)}','${formatFecha(f._fin)}','${horasEst}','${pct}')"
+              onmouseleave="hideTooltip()" onmousemove="moveTooltip(event)">
+              ${w>50?(horasEst>0?horasEst+'h':''):''}
+            </div>
+            ${wReal>0?`<div class="gantt-bar-real" style="left:${x}px;width:${wReal}px;background:#4ade80;"></div>`:''}
+          </td>
+        </tr>`;
       });
     }
   });
 
-  document.getElementById('gantt-container').innerHTML = `
-    <div class="gantt-layout">
-      <div class="gantt-left">${leftHTML}</div>
-      <div class="gantt-right">
-        <div class="gantt-right-inner" style="width:${totalWidth}px;">${rightHTML}</div>
-      </div>
-    </div>`;
+  html += `</tbody></table>`;
+  document.getElementById('gantt-container').innerHTML = `<div class="gantt-scroll-wrap">${html}</div>`;
 }
 
 function showTooltip(e, nombre, inicio, fin, horas, pct) {

@@ -246,6 +246,15 @@ function getFiltros() {
   };
 }
 
+// Parsear YYYY-MM-DD sin problema de timezone
+function parseDate(str) {
+  if(!str) return new Date();
+  if(str instanceof Date) return str;
+  const s = String(str).split('T')[0];
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
 function addDiasHabiles(fecha, dias) {
   const d = new Date(fecha);
   let added = 0;
@@ -259,7 +268,7 @@ function addDiasHabiles(fecha, dias) {
 
 function calcularFechasFases(fases, fechaInicioProyecto, ingenieros) {
   const ings = Math.max(parseInt(ingenieros)||1, 1);
-  let cursor = new Date(fechaInicioProyecto);
+  let cursor = parseDate(fechaInicioProyecto);
   return fases.map(f => {
     const horasEst = parseFloat(f.horas_estimadas)||0;
     const horasReal = parseFloat(f.horas_reales)||0;
@@ -309,7 +318,7 @@ function renderGantt() {
   // Calcular fechas para cada proyecto
   const proyConFechas = datos.map(d => {
     const p = d.proyecto;
-    const fechaInicio = p.fecha_inicio ? new Date(p.fecha_inicio) : new Date();
+    const fechaInicio = p.fecha_inicio ? parseDate(p.fecha_inicio) : new Date();
     const ingenieros = parseInt(p.ingenieros_asignados)||1;
     const fasesConFechas = calcularFechasFases(d.fases, fechaInicio, ingenieros);
     const fechaFin = fasesConFechas.length ? fasesConFechas[fasesConFechas.length-1]._fin : fechaInicio;
@@ -354,17 +363,40 @@ function renderGantt() {
 
   const totalWidth = cols.reduce((s,c)=>s+c.width,0);
 
-  // Función para convertir fecha a posición X
+  // Calcular acumulado de X por columna — usar las cols como referencia única
+  // Cada col representa 7 días (semanas) o N días (meses)
+  const colStarts = []; // {date, x}
+  let xAcc = 0;
+  cols.forEach(c => {
+    colStarts.push({date: c.date, x: xAcc, width: c.width, daysInMonth: c.daysInMonth||7});
+    xAcc += c.width;
+  });
+
   function dateToX(date) {
-    const d = new Date(date);
-    const totalMs = maxDate - minDate;
-    const fromStart = d - minDate;
-    return Math.max(0, Math.min(totalWidth, (fromStart/totalMs)*totalWidth));
+    const d = date instanceof Date ? date : new Date(date);
+    const dMs = d.getTime();
+    // Antes del inicio
+    if(dMs <= colStarts[0].date.getTime()) return 0;
+    // Después del fin
+    if(dMs >= colStarts[colStarts.length-1].date.getTime() + colStarts[colStarts.length-1].width * 86400000) return totalWidth;
+    // Encontrar el intervalo de columna usando la fecha de la siguiente col como fin real
+    for(let i = 0; i < colStarts.length; i++) {
+      const colStart = colStarts[i].date.getTime();
+      const colEnd = i+1 < colStarts.length
+        ? colStarts[i+1].date.getTime()
+        : colStart + (escala==='semanas' ? 7 : colStarts[i].daysInMonth||30) * 86400000;
+      if(dMs >= colStart && dMs < colEnd) {
+        const pct = (dMs - colStart) / (colEnd - colStart);
+        return colStarts[i].x + pct * colStarts[i].width;
+      }
+    }
+    return totalWidth;
   }
+
   function durationToW(start, end) {
-    const totalMs = maxDate - minDate;
-    const dur = new Date(end) - new Date(start);
-    return Math.max(4, (dur/totalMs)*totalWidth);
+    const x1 = dateToX(start);
+    const x2 = dateToX(end);
+    return Math.max(4, x2 - x1);
   }
 
   // Posición de hoy

@@ -255,17 +255,6 @@ function parseDate(str) {
   return new Date(y, m-1, d);
 }
 
-function addDiasHabiles(fecha, dias) {
-  const d = new Date(fecha);
-  let added = 0;
-  while(added < dias) {
-    d.setDate(d.getDate()+1);
-    const dow = d.getDay();
-    if(dow !== 0 && dow !== 6) added++;
-  }
-  return d;
-}
-
 function calcularFechasFases(fases, fechaInicioProyecto, ingenieros) {
   const ings = Math.max(parseInt(ingenieros)||1, 1);
   let cursor = parseDate(fechaInicioProyecto);
@@ -281,11 +270,12 @@ function calcularFechasFases(fases, fechaInicioProyecto, ingenieros) {
         durDias = Math.ceil(horasEst / (HORAS_DIA * ings));
       }
     } else {
-      durDias = 5; // default 1 semana si no hay horas
+      durDias = 7; // default 1 semana si no hay horas
     }
-    const fin = addDiasHabiles(inicio, durDias);
+    // Usar días calendario para que coincida con el eje
+    const fin = new Date(cursor);
+    fin.setDate(fin.getDate() + durDias);
     cursor = new Date(fin);
-    cursor.setDate(cursor.getDate()+1);
     const pct = horasEst > 0 ? Math.min(Math.round(horasReal/horasEst*100),100) : 0;
     return {...f, _inicio: inicio, _fin: fin, _durDias: durDias, _pct: pct};
   });

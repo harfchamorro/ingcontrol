@@ -340,7 +340,7 @@ function renderGantt() {
   // Sistema de coordenadas basado en días reales
   // Fecha base = inicio del rango (lunes si semanas, día 1 si meses)
   let baseDate;
-  const PX_POR_DIA = escala === 'semanas' ? 26 : 8; // píxeles por día
+  const PX_POR_DIA = escala === 'semanas' ? 18 : 8; // píxeles por día
 
   if(escala === 'semanas') {
     baseDate = new Date(minDate);
@@ -369,8 +369,9 @@ function renderGantt() {
     let cur = new Date(baseDate);
     const endLimit = new Date(maxDate); endLimit.setDate(endLimit.getDate()+7);
     while(cur <= endLimit) {
+      const finSemana = new Date(cur); finSemana.setDate(finSemana.getDate()+6);
       cols.push({
-        label: formatFechaCorta(cur),
+        label: formatFechaCorta(cur) + ' – ' + formatFechaCorta(finSemana),
         date: new Date(cur),
         width: 7 * PX_POR_DIA
       });

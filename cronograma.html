@@ -333,8 +333,9 @@ function renderGantt() {
   minDate.setDate(minDate.getDate() - 7);
   maxDate.setDate(maxDate.getDate() + 14);
 
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  // Fecha de hoy en zona horaria Colombia (UTC-5)
+  const nowColombia = new Date(new Date().toLocaleString('en-US', {timeZone: 'America/Bogota'}));
+  const today = new Date(nowColombia.getFullYear(), nowColombia.getMonth(), nowColombia.getDate());
 
   // Sistema de coordenadas basado en días reales
   // Fecha base = inicio del rango (lunes si semanas, día 1 si meses)

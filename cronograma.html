@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cronograma - IngControl</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--border:#2e2e38;
+    --accent:#6ee7b7;--accent2:#818cf8;--text:#f1f1f3;--text2:#8888a0;
+    --danger:#f87171;--warning:#fbbf24;--success:#4ade80;--radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
+  .logo{font-size:15px;font-weight:600;color:var(--accent);}
+  .logo span{color:var(--text2);font-weight:400;}
+  .nav{display:flex;gap:8px;}
+  .nav a{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:8px;transition:all .15s;}
+  .nav a:hover{color:var(--text);background:var(--surface2);}
+  .nav a.active{color:var(--accent);background:rgba(110,231,183,.1);}
+  .container{max-width:1400px;margin:0 auto;padding:32px 24px;}
+  .page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+  .page-title{font-size:22px;font-weight:600;}
+  .page-sub{font-size:14px;color:var(--text2);margin-top:2px;}
+  .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  select.filter,input.filter{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;}
+  select.filter:focus,input.filter:focus{border-color:var(--accent2);}
+  .btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;color:var(--text2);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;}
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .btn.active-tab{background:rgba(129,140,248,.15);border-color:var(--accent2);color:var(--accent2);}
+
+  /* TABS */
+  .tabs{display:flex;gap:8px;margin-bottom:20px;}
+
+  /* LEGEND */
+  .legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);}
+  .legend-dot{width:12px;height:12px;border-radius:3px;}
+
+  /* GANTT WRAPPER */
+  .gantt-outer{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  .gantt-scroll{overflow-x:auto;}
+
+  /* GANTT TABLE */
+  .gantt-table{width:100%;border-collapse:collapse;min-width:900px;}
+  .gantt-header{background:var(--surface2);border-bottom:1px solid var(--border);}
+  .gantt-header th{padding:10px 0;font-size:10px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;font-weight:400;text-align:center;border-right:1px solid var(--border);}
+  .gantt-header th.col-info{text-align:left;padding:10px 16px;width:260px;min-width:260px;border-right:2px solid var(--border);}
+  .gantt-header th.col-time{min-width:36px;padding:10px 4px;}
+
+  .gantt-project-row td{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);}
+  .gantt-project-row td.proj-name-cell{display:flex;align-items:center;gap:10px;}
+  .project-label{font-size:13px;font-weight:600;color:var(--text);}
+  .project-meta{font-size:11px;color:var(--text2);margin-top:1px;}
+  .badge-tipo{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500;}
+  .badge-externo{background:rgba(129,140,248,.15);color:var(--accent2);}
+  .badge-interno{background:rgba(110,231,183,.15);color:var(--accent);}
+  .badge-desarrollo_producto{background:rgba(251,191,36,.15);color:var(--warning);}
+  .badge-licitacion{background:rgba(248,113,113,.15);color:var(--danger);}
+  .badge-edicion_planos{background:rgba(167,139,250,.15);color:#c4b5fd;}
+  .badge-otros{background:rgba(136,136,160,.15);color:var(--text2);}
+
+  .gantt-fase-row td{padding:0;border-bottom:1px solid rgba(46,46,56,.5);}
+  .gantt-fase-row td.fase-info{padding:8px 16px 8px 28px;border-right:2px solid var(--border);vertical-align:middle;}
+  .fase-nombre{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
+  .fase-horas{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:2px;}
+  .gantt-fase-row td.fase-cell{padding:6px 0;vertical-align:middle;position:relative;border-right:1px solid rgba(46,46,56,.3);}
+
+  .gantt-bar-wrap{position:relative;height:22px;width:100%;}
+  .gantt-bar{position:absolute;height:18px;top:2px;border-radius:4px;display:flex;align-items:center;padding:0 6px;font-size:10px;font-family:'DM Mono',monospace;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;cursor:pointer;transition:filter .15s;min-width:4px;}
+  .gantt-bar:hover{filter:brightness(1.2);}
+  .gantt-bar-real{opacity:.35;pointer-events:none;}
+
+  .today-line{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);opacity:.7;z-index:10;pointer-events:none;}
+
+  /* Estado badges */
+  .estado-badge{font-size:10px;padding:2px 7px;border-radius:10px;}
+  .estado-activo,.estado-en_curso{background:rgba(110,231,183,.15);color:var(--accent);}
+  .estado-completado{background:rgba(74,222,128,.15);color:var(--success);}
+  .estado-cancelado{background:rgba(248,113,113,.15);color:var(--danger);}
+  .estado-pausado{background:rgba(251,191,36,.15);color:var(--warning);}
+  .estado-cotizacion{background:rgba(129,140,248,.15);color:var(--accent2);}
+
+  /* Loading */
+  .loading-text{color:var(--text2);font-size:13px;text-align:center;padding:40px;}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* Tooltip */
+  .tooltip{position:fixed;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text);z-index:1000;pointer-events:none;display:none;max-width:220px;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  .tooltip-title{font-weight:600;margin-bottom:6px;color:var(--accent);}
+  .tooltip-row{display:flex;justify-content:space-between;gap:16px;color:var(--text2);margin-top:3px;}
+  .tooltip-row span:last-child{color:var(--text);font-family:'DM Mono',monospace;}
+
+  /* Pct bar inline */
+  .pct-mini{height:4px;background:var(--bg);border-radius:2px;overflow:hidden;margin-top:4px;}
+  .pct-mini-fill{height:100%;border-radius:2px;}
+
+  /* No data */
+  .empty-state{text-align:center;padding:60px 20px;color:var(--text2);}
+  .empty-icon{font-size:32px;margin-bottom:12px;}
+
+  /* month header subrow */
+  .month-header-row th{background:var(--bg);padding:6px 0;font-size:9px;font-family:'DM Mono',monospace;color:var(--text2);text-align:center;border-right:1px solid var(--border);letter-spacing:.03em;}
+  .month-header-row th.col-info-sub{border-right:2px solid var(--border);}
+  .month-span{border-right:2px solid var(--border) !important;color:var(--text) !important;font-size:10px !important;}
+
+  .stats-mini{display:flex;gap:20px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--bg);}
+  .stat-mini-item{font-size:12px;color:var(--text2);}
+  .stat-mini-item strong{color:var(--text);font-family:'DM Mono',monospace;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Ing<span>Control</span> · <span>Cronograma</span></div>
+  <nav class="nav">
+    <a href="index.html">Ingenieros</a>
+    <a href="proyectos.html">Proyectos</a>
+    <a href="actividades.html">Actividades</a>
+    <a href="registro.html">Registro</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="cronograma.html" class="active">Cronograma</a>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Cronograma de proyectos</div>
+      <div class="page-sub">Vista de fases y tiempos estimados por proyecto</div>
+    </div>
+    <div class="filters">
+      <select class="filter" id="filtro-estado" onchange="renderGantt()">
+        <option value="todos">Todos los estados</option>
+        <option value="activo" selected>Activos</option>
+        <option value="cotizacion">En cotización</option>
+        <option value="completado">Completados</option>
+        <option value="cancelado">Cancelados</option>
+      </select>
+      <select class="filter" id="filtro-tipo" onchange="renderGantt()">
+        <option value="todos">Todos los tipos</option>
+        <option value="externo">Externo</option>
+        <option value="interno">Interno</option>
+        <option value="desarrollo_producto">Desarrollo de Producto</option>
+        <option value="licitacion">Licitación</option>
+        <option value="edicion_planos">Edición de Planos</option>
+        <option value="otros">Otros</option>
+      </select>
+      <select class="filter" id="filtro-escala" onchange="renderGantt()">
+        <option value="semanas">Por semanas</option>
+        <option value="meses" selected>Por meses</option>
+      </select>
+      <button class="btn" onclick="recargar()">↻ Actualizar</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="btn active-tab" id="tab-estimado" onclick="setTab('estimado')">📋 Estimado</button>
+    <button class="btn" id="tab-capacidad" onclick="setTab('capacidad')">⚡ Por capacidad</button>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent2);"></div> Fase proyectada</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent);opacity:.5;"></div> Avance real</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--danger);width:3px;border-radius:0;"></div> Hoy</div>
+    <div class="legend-item" id="tab-desc" style="font-style:italic;color:var(--text2);font-size:11px;">Basado en horas estimadas de cada fase</div>
+  </div>
+
+  <!-- GANTT -->
+  <div class="gantt-outer">
+    <div id="stats-mini" class="stats-mini"></div>
+    <div class="gantt-scroll">
+      <div id="gantt-container"><div class="loading-text"><span class="spinner"></span>Cargando datos...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-title" id="tt-title"></div>
+  <div class="tooltip-row"><span>Inicio:</span><span id="tt-inicio"></span></div>
+  <div class="tooltip-row"><span>Fin:</span><span id="tt-fin"></span></div>
+  <div class="tooltip-row"><span>Horas est.:</span><span id="tt-horas"></span></div>
+  <div class="tooltip-row"><span>Avance:</span><span id="tt-avance"></span></div>
+  <div class="pct-mini" style="margin-top:8px;"><div class="pct-mini-fill" id="tt-bar" style="background:var(--accent);"></div></div>
+</div>
+
+<script>
+const API_PROYECTOS = 'https://primary-production-420b7.up.railway.app/webhook/proyectos';
+const API_FASES = 'https://primary-production-420b7.up.railway.app/webhook/proyecto-fases';
+
+const TIPO_LABELS = {externo:'Externo',interno:'Interno',desarrollo_producto:'Desarrollo',licitacion:'Licitación',edicion_planos:'Ed. Planos',otros:'Otros'};
+const TIPO_COLORS = {externo:'#818cf8',interno:'#6ee7b7',desarrollo_producto:'#fbbf24',licitacion:'#f87171',edicion_planos:'#c4b5fd',otros:'#8888a0'};
+const HORAS_DIA = 8.75;
+const DIAS_SEMANA = 5;
+
+let allData = []; // [{proyecto, fases}]
+let currentTab = 'estimado';
+
+function setTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-estimado').classList.toggle('active-tab', tab==='estimado');
+  document.getElementById('tab-capacidad').classList.toggle('active-tab', tab==='capacidad');
+  document.getElementById('tab-desc').textContent = tab==='estimado'
+    ? 'Basado en horas estimadas de cada fase'
+    : 'Basado en capacidad de ingenieros asignados (8.75h/día)';
+  renderGantt();
+}
+
+async function recargar() {
+  document.getElementById('gantt-container').innerHTML = '<div class="loading-text"><span class="spinner"></span>Cargando datos...</div>';
+  allData = [];
+  try {
+    // Cargar proyectos
+    const resP = await fetch(API_PROYECTOS, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'listar'})});
+    const rawP = await resP.json();
+    const proyectos = Array.isArray(rawP) ? rawP : (rawP.data ? [].concat(rawP.data) : []);
+
+    // Cargar fases para cada proyecto
+    const promises = proyectos.map(async p => {
+      try {
+        const resF = await fetch(API_FASES, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({proyecto_id: p.id})});
+        const rawF = await resF.json();
+        const fases = Array.isArray(rawF) ? rawF : (rawF.data ? [].concat(rawF.data) : []);
+        return {proyecto: p, fases};
+      } catch(e) { return {proyecto: p, fases:[]}; }
+    });
+
+    allData = await Promise.all(promises);
+  } catch(e) {
+    document.getElementById('gantt-container').innerHTML = '<div class="loading-text">Error al cargar datos. Verifica la conexión con N8N.</div>';
+    return;
+  }
+  renderGantt();
+}
+
+function getFiltros() {
+  return {
+    estado: document.getElementById('filtro-estado').value,
+    tipo: document.getElementById('filtro-tipo').value,
+    escala: document.getElementById('filtro-escala').value,
+  };
+}
+
+function addDiasHabiles(fecha, dias) {
+  const d = new Date(fecha);
+  let added = 0;
+  while(added < dias) {
+    d.setDate(d.getDate()+1);
+    const dow = d.getDay();
+    if(dow !== 0 && dow !== 6) added++;
+  }
+  return d;
+}
+
+function calcularFechasFases(fases, fechaInicioProyecto, ingenieros) {
+  const ings = Math.max(parseInt(ingenieros)||1, 1);
+  let cursor = new Date(fechaInicioProyecto);
+  return fases.map(f => {
+    const horasEst = parseFloat(f.horas_estimadas)||0;
+    const horasReal = parseFloat(f.horas_reales)||0;
+    const inicio = new Date(cursor);
+    let durDias = 0;
+    if(horasEst > 0) {
+      if(currentTab === 'estimado') {
+        durDias = Math.ceil(horasEst / HORAS_DIA);
+      } else {
+        durDias = Math.ceil(horasEst / (HORAS_DIA * ings));
+      }
+    } else {
+      durDias = 5; // default 1 semana si no hay horas
+    }
+    const fin = addDiasHabiles(inicio, durDias);
+    cursor = new Date(fin);
+    cursor.setDate(cursor.getDate()+1);
+    const pct = horasEst > 0 ? Math.min(Math.round(horasReal/horasEst*100),100) : 0;
+    return {...f, _inicio: inicio, _fin: fin, _durDias: durDias, _pct: pct};
+  });
+}
+
+function formatFecha(d) {
+  return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'2-digit'});
+}
+function formatFechaCorta(d) {
+  return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short'});
+}
+
+function renderGantt() {
+  const {estado, tipo, escala} = getFiltros();
+  
+  // Filtrar
+  let datos = allData.filter(d => {
+    const p = d.proyecto;
+    if(estado !== 'todos' && p.estado !== estado) return false;
+    if(tipo !== 'todos' && p.tipo_proyecto !== tipo) return false;
+    return true;
+  });
+
+  if(!datos.length) {
+    document.getElementById('gantt-container').innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div>No hay proyectos con los filtros seleccionados</div></div>';
+    document.getElementById('stats-mini').innerHTML = '';
+    return;
+  }
+
+  // Calcular fechas para cada proyecto
+  const proyConFechas = datos.map(d => {
+    const p = d.proyecto;
+    const fechaInicio = p.fecha_inicio ? new Date(p.fecha_inicio) : new Date();
+    const ingenieros = parseInt(p.ingenieros_asignados)||1;
+    const fasesConFechas = calcularFechasFases(d.fases, fechaInicio, ingenieros);
+    const fechaFin = fasesConFechas.length ? fasesConFechas[fasesConFechas.length-1]._fin : fechaInicio;
+    return {proyecto: p, fases: fasesConFechas, fechaInicio, fechaFin};
+  });
+
+  // Rango global de fechas
+  const allDates = proyConFechas.flatMap(d => [d.fechaInicio, d.fechaFin]);
+  let minDate = new Date(Math.min(...allDates));
+  let maxDate = new Date(Math.max(...allDates));
+  // padding
+  minDate.setDate(minDate.getDate() - 7);
+  maxDate.setDate(maxDate.getDate() + 14);
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  // Generar columnas de tiempo
+  const cols = [];
+  if(escala === 'semanas') {
+    // Por semanas — empezar en lunes
+    let cur = new Date(minDate);
+    while(cur.getDay() !== 1) cur.setDate(cur.getDate()-1);
+    while(cur <= maxDate) {
+      cols.push({label: formatFechaCorta(cur), date: new Date(cur), width:36});
+      cur.setDate(cur.getDate()+7);
+    }
+  } else {
+    // Por meses
+    let cur = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+    while(cur <= maxDate) {
+      const daysInMonth = new Date(cur.getFullYear(), cur.getMonth()+1, 0).getDate();
+      cols.push({
+        label: cur.toLocaleDateString('es-CO',{month:'short',year:'2-digit'}),
+        date: new Date(cur),
+        daysInMonth,
+        width: Math.max(60, Math.round(daysInMonth * 2.2))
+      });
+      cur.setMonth(cur.getMonth()+1);
+    }
+  }
+
+  const totalWidth = cols.reduce((s,c)=>s+c.width,0);
+
+  // Función para convertir fecha a posición X
+  function dateToX(date) {
+    const d = new Date(date);
+    const totalMs = maxDate - minDate;
+    const fromStart = d - minDate;
+    return Math.max(0, Math.min(totalWidth, (fromStart/totalMs)*totalWidth));
+  }
+  function durationToW(start, end) {
+    const totalMs = maxDate - minDate;
+    const dur = new Date(end) - new Date(start);
+    return Math.max(4, (dur/totalMs)*totalWidth);
+  }
+
+  // Posición de hoy
+  const todayX = dateToX(today);
+
+  // Stats
+  const totalProyectos = proyConFechas.length;
+  const totalFases = proyConFechas.reduce((s,d)=>s+d.fases.length,0);
+  const totalHorasEst = proyConFechas.reduce((s,d)=>s+d.fases.reduce((ss,f)=>ss+(parseFloat(f.horas_estimadas)||0),0),0);
+  const totalHorasReal = proyConFechas.reduce((s,d)=>s+d.fases.reduce((ss,f)=>ss+(parseFloat(f.horas_reales)||0),0),0);
+  const avanceGlobal = totalHorasEst > 0 ? Math.round(totalHorasReal/totalHorasEst*100) : 0;
+
+  document.getElementById('stats-mini').innerHTML = `
+    <div class="stat-mini-item">Proyectos: <strong>${totalProyectos}</strong></div>
+    <div class="stat-mini-item">Fases totales: <strong>${totalFases}</strong></div>
+    <div class="stat-mini-item">Horas estimadas: <strong>${totalHorasEst.toFixed(0)}h</strong></div>
+    <div class="stat-mini-item">Horas ejecutadas: <strong>${totalHorasReal.toFixed(1)}h</strong></div>
+    <div class="stat-mini-item">Avance global: <strong style="color:var(--accent);">${avanceGlobal}%</strong></div>
+    ${currentTab==='capacidad' ? '<div class="stat-mini-item" style="color:var(--accent2);">⚡ Ajustado por ingenieros asignados</div>' : ''}
+  `;
+
+  // Construir tabla
+  let html = `<table class="gantt-table">
+    <thead class="gantt-header">
+      <tr>
+        <th class="col-info">Proyecto / Fase</th>`;
+  
+  if(escala === 'meses') {
+    cols.forEach(c => {
+      html += `<th class="col-time month-span" colspan="1" style="width:${c.width}px;min-width:${c.width}px;">${c.label}</th>`;
+    });
+  } else {
+    cols.forEach(c => {
+      html += `<th class="col-time" style="width:${c.width}px;min-width:${c.width}px;">${c.label}</th>`;
+    });
+  }
+  html += `</tr></thead><tbody>`;
+
+  proyConFechas.forEach(({proyecto:p, fases}) => {
+    const color = TIPO_COLORS[p.tipo_proyecto]||'#8888a0';
+    const tipoLabel = TIPO_LABELS[p.tipo_proyecto]||p.tipo_proyecto||'—';
+    const estadoClass = `estado-${p.estado}`;
+    const badgeClass = `badge-${p.tipo_proyecto||'otros'}`;
+
+    // Fila de proyecto
+    html += `<tr class="gantt-project-row">
+      <td colspan="${cols.length+1}" style="padding:8px 16px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="width:4px;height:32px;border-radius:2px;background:${color};flex-shrink:0;"></div>
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="project-label">${p.nombre}</span>
+              <span class="badge-tipo ${badgeClass}">${tipoLabel}</span>
+              <span class="estado-badge ${estadoClass}">${p.estado||''}</span>
+              ${p.complejidad ? `<span style="font-size:10px;color:var(--text2);">${p.complejidad}</span>` : ''}
+            </div>
+            <div class="project-meta">
+              Inicio: ${p.fecha_inicio ? formatFecha(new Date(p.fecha_inicio)) : 'Sin fecha'} 
+              · ${fases.length} fase${fases.length!==1?'s':''} 
+              · ${p.ingenieros_asignados||1} ingeniero${(p.ingenieros_asignados||1)!==1?'s':''}
+              ${fases.length ? '· Fin estimado: ' + formatFecha(fases[fases.length-1]._fin) : ''}
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+
+    // Filas de fases
+    fases.forEach(f => {
+      const horasEst = parseFloat(f.horas_estimadas)||0;
+      const horasReal = parseFloat(f.horas_reales)||0;
+      const x = dateToX(f._inicio);
+      const w = durationToW(f._inicio, f._fin);
+      const wReal = horasEst > 0 ? Math.min(w * (horasReal/horasEst), w) : 0;
+      const pct = f._pct;
+      const barColor = pct >= 100 ? '#4ade80' : pct >= 75 ? '#fbbf24' : color;
+      const ttId = `fase-${f.id}`;
+
+      html += `<tr class="gantt-fase-row">
+        <td class="fase-info" style="border-right:2px solid var(--border);">
+          <div class="fase-nombre">${f.orden||''} ${f.nombre}</div>
+          <div class="fase-horas">${horasEst > 0 ? horasEst+'h est.' : 'Sin horas'} ${horasReal > 0 ? '· '+horasReal+'h real' : ''} · ${f._durDias}d</div>
+        </td>
+        <td colspan="${cols.length}" style="padding:4px 0;position:relative;">
+          <div style="position:relative;height:26px;width:${totalWidth}px;">
+            <div style="position:absolute;left:${todayX}px;top:0;bottom:0;width:2px;background:var(--danger);opacity:.6;z-index:5;"></div>
+            ${horasEst > 0 || true ? `
+            <div class="gantt-bar" 
+              style="left:${x}px;width:${w}px;background:${color};opacity:.85;"
+              onmouseenter="showTooltip(event,'${f.nombre}','${formatFecha(f._inicio)}','${formatFecha(f._fin)}','${horasEst}','${pct}')"
+              onmouseleave="hideTooltip()"
+              onmousemove="moveTooltip(event)">
+              ${w > 50 ? (horasEst > 0 ? horasEst+'h' : f._durDias+'d') : ''}
+            </div>` : ''}
+            ${wReal > 0 ? `<div class="gantt-bar gantt-bar-real" style="left:${x}px;width:${wReal}px;background:#4ade80;"></div>` : ''}
+          </div>
+        </td>
+      </tr>`;
+    });
+  });
+
+  html += `</tbody></table>`;
+  document.getElementById('gantt-container').innerHTML = html;
+}
+
+// Tooltip
+function showTooltip(e, nombre, inicio, fin, horas, pct) {
+  const tt = document.getElementById('tooltip');
+  document.getElementById('tt-title').textContent = nombre;
+  document.getElementById('tt-inicio').textContent = inicio;
+  document.getElementById('tt-fin').textContent = fin;
+  document.getElementById('tt-horas').textContent = horas > 0 ? horas+'h' : 'Sin estimar';
+  document.getElementById('tt-avance').textContent = pct+'%';
+  document.getElementById('tt-bar').style.width = pct+'%';
+  const pctN = parseInt(pct);
+  document.getElementById('tt-bar').style.background = pctN >= 100 ? '#4ade80' : pctN >= 75 ? '#fbbf24' : '#818cf8';
+  tt.style.display = 'block';
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  const tt = document.getElementById('tooltip');
+  let x = e.clientX + 14;
+  let y = e.clientY - 10;
+  if(x + 230 > window.innerWidth) x = e.clientX - 244;
+  tt.style.left = x+'px';
+  tt.style.top = y+'px';
+}
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+}
+
+// Init
+recargar();
+</script>
+</body>
+</html>

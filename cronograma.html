@@ -388,49 +388,34 @@ function renderGantt() {
     }
   }
 
-  const totalWidth = cols.reduce((s,c)=>s+c.width, 0);
-
-  // Acumulado de X por columna
-  let xAcc2 = 0;
-  cols.forEach(c => { c.x = xAcc2; xAcc2 += c.width; });
-
-  // Contar días hábiles desde baseDate hasta una fecha
-  function diasHabilesDesdeBase(date) {
-    const d = date instanceof Date ? new Date(date) : new Date(date);
-    d.setHours(0,0,0,0);
-    const base = new Date(baseDate);
-    base.setHours(0,0,0,0);
-    if(d <= base) return 0;
-    let count = 0;
-    const cur = new Date(base);
-    while(cur < d) {
-      cur.setDate(cur.getDate()+1);
-      const dow = cur.getDay();
-      if(dow !== 0 && dow !== 6) count++;
-    }
-    return count;
-  }
-
-  // dateToX: basado en días hábiles reales
+  // Píxeles por día hábil
   const PX_DIA_HAB = escala === 'semanas' ? 26 : 10;
 
+  // Calcular ancho de cada columna en días hábiles reales
+  cols.forEach(c => {
+    const habiles = diasHabilesEntre(c.date, c.endDate);
+    c.habiles = Math.max(1, habiles);
+    c.width = c.habiles * PX_DIA_HAB;
+  });
+
+  // Acumulado de X — único sistema
+  let xAcc = 0;
+  cols.forEach(c => { c.x = xAcc; xAcc += c.width; });
+  const totalWidth = xAcc;
+
+  // dateToX: cuenta días hábiles desde baseDate
   function dateToX(date) {
-    return Math.max(0, diasHabilesDesdeBase(date) * PX_DIA_HAB);
+    const d = date instanceof Date ? new Date(date) : new Date(date);
+    d.setHours(0,0,0,0);
+    const base = new Date(baseDate); base.setHours(0,0,0,0);
+    if(d <= base) return 0;
+    const habiles = diasHabilesEntre(base, d);
+    return habiles * PX_DIA_HAB;
   }
 
   function durationToW(start, end) {
     return Math.max(6, dateToX(end) - dateToX(start));
   }
-
-  // Recalcular ancho de columnas basado en días hábiles reales
-  cols.forEach(c => {
-    const habiles = diasHabilesEntre(c.date, c.endDate);
-    c.width = Math.max(1, habiles) * PX_DIA_HAB;
-  });
-  // Recalcular x acumulado
-  let xAcc3 = 0;
-  cols.forEach(c => { c.x = xAcc3; xAcc3 += c.width; });
-  const totalWidthReal = xAcc3;
 
   // Posición de hoy
   const todayX = dateToX(today);
@@ -515,7 +500,7 @@ function renderGantt() {
           <div class="fase-horas">${horasEst > 0 ? horasEst+'h est.' : 'Sin horas'} ${horasReal > 0 ? '· '+horasReal+'h real' : ''} · ${f._durDias}d</div>
         </td>
         <td colspan="${cols.length}" style="padding:4px 0;position:relative;">
-          <div style="position:relative;height:26px;width:${totalWidthReal}px;">
+          <div style="position:relative;height:26px;width:${totalWidth}px;">
             <div style="position:absolute;left:${todayX}px;top:0;bottom:0;width:2px;background:var(--danger);opacity:.6;z-index:5;"></div>
             ${horasEst > 0 || true ? `
             <div class="gantt-bar" 

@@ -418,44 +418,99 @@ async function crearFase() {
   }
 }
 
+let ntFaseCount = 1;
+
+function generarKey() {
+  const label = document.getElementById('nt-label').value.trim();
+  const key = label.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  document.getElementById('nt-key-preview').textContent = key || '—';
+}
+
+function agregarFilaFase() {
+  ntFaseCount++;
+  const tbody = document.getElementById('nt-fases-body');
+  const tr = document.createElement('tr');
+  tr.id = `nt-fase-row-${ntFaseCount}`;
+  tr.innerHTML = `
+    <td style="padding:4px 4px;"><input class="input-field" placeholder="Nombre fase" style="font-size:12px;padding:5px 8px;"></td>
+    <td style="padding:4px 4px;"><input class="horas-input" type="number" min="0" step="0.5" placeholder="—" style="width:56px;font-size:12px;"></td>
+    <td style="padding:4px 4px;"><input class="horas-input" type="number" min="0" step="0.5" placeholder="—" style="width:56px;font-size:12px;"></td>
+    <td style="padding:4px 4px;"><input class="horas-input" type="number" min="0" step="0.5" placeholder="—" style="width:56px;font-size:12px;"></td>
+    <td style="padding:4px 4px;"><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()" type="button">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
 function abrirModalTipo() {
+  ntFaseCount = 1;
+  document.getElementById('nt-label').value = '';
+  document.getElementById('nt-key-preview').textContent = '—';
+  document.getElementById('nt-fases-body').innerHTML = `<tr id="nt-fase-row-1">
+    <td style="padding:4px 4px;"><input class="input-field" placeholder="Nombre fase" style="font-size:12px;padding:5px 8px;"></td>
+    <td style="padding:4px 4px;"><input class="horas-input" type="number" min="0" step="0.5" placeholder="—" style="width:56px;font-size:12px;"></td>
+    <td style="padding:4px 4px;"><input class="horas-input" type="number" min="0" step="0.5" placeholder="—" style="width:56px;font-size:12px;"></td>
+    <td style="padding:4px 4px;"><input class="horas-input" type="number" min="0" step="0.5" placeholder="—" style="width:56px;font-size:12px;"></td>
+    <td style="padding:4px 4px;"></td>
+  </tr>`;
   document.getElementById('modal-tipo').style.display = 'flex';
-  document.getElementById('nt-key').focus();
+  document.getElementById('nt-label').focus();
 }
 
 function cerrarModalTipo() {
   document.getElementById('modal-tipo').style.display = 'none';
-  ['nt-key','nt-label','nt-fase'].forEach(id => document.getElementById(id).value = '');
 }
 
 async function crearTipo() {
-  const key = document.getElementById('nt-key').value.trim().toLowerCase().replace(/\s+/g,'_');
   const label = document.getElementById('nt-label').value.trim();
-  const fase = document.getElementById('nt-fase').value.trim();
+  const key = label.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
 
-  if(!key || !label || !fase) { showToast('Completa todos los campos', 'error'); return; }
+  if(!label || !key) { showToast('El nombre del tipo es requerido', 'error'); return; }
   if(TIPOS_ORDER.includes(key)) { showToast('Ese tipo ya existe', 'error'); return; }
 
-  try {
-    await fetch(API, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        accion: 'crear_tipo',
-        tipo_proyecto: key,
-        nombre: fase,
-        orden: 1,
-        horas_pequeno: null,
-        horas_mediano: null,
-        horas_grande: null
-      })
+  // Recoger fases de la tabla
+  const rows = document.querySelectorAll('#nt-fases-body tr');
+  const fases = [];
+  rows.forEach((tr, i) => {
+    const inputs = tr.querySelectorAll('input');
+    const nombre = inputs[0].value.trim();
+    if(!nombre) return;
+    fases.push({
+      nombre,
+      orden: i + 1,
+      horas_pequeno: inputs[1].value !== '' ? parseFloat(inputs[1].value) : null,
+      horas_mediano: inputs[2].value !== '' ? parseFloat(inputs[2].value) : null,
+      horas_grande: inputs[3].value !== '' ? parseFloat(inputs[3].value) : null
     });
+  });
+
+  if(!fases.length) { showToast('Agrega al menos una fase', 'error'); return; }
+
+  try {
+    for(const f of fases) {
+      await fetch(API, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          accion: 'crear_tipo',
+          tipo_proyecto: key,
+          nombre: f.nombre,
+          orden: f.orden,
+          horas_pequeno: f.horas_pequeno,
+          horas_mediano: f.horas_mediano,
+          horas_grande: f.horas_grande
+        })
+      });
+    }
     TIPO_LABELS[key] = label;
     TIPOS_ORDER.push(key);
     cerrarModalTipo();
     await cargar();
     setTipo(key);
-    showToast(`Tipo "${label}" creado`, 'success');
+    showToast(`Tipo "${label}" creado con ${fases.length} fase(s)`, 'success');
   } catch(e) {
     showToast('Error al crear el tipo', 'error');
   }
@@ -495,19 +550,37 @@ cargar();
 <div class="modal-overlay" id="modal-tipo" style="display:none;" onclick="if(event.target===this)cerrarModalTipo()">
   <div class="modal-box">
     <div class="modal-title">Nuevo tipo de proyecto</div>
-    <div class="modal-sub">Define el identificador y la primera fase del nuevo tipo</div>
+    <div class="modal-sub">Define el nombre y las fases del nuevo tipo</div>
     <div class="form-group">
-      <label class="form-label">Identificador (clave interna)</label>
-      <input class="input-field" id="nt-key" type="text" placeholder="ej: mantenimiento" style="text-transform:lowercase;">
-      <div style="font-size:11px;color:var(--text2);margin-top:4px;">Sin espacios ni tildes. Ej: mantenimiento, consultoria</div>
+      <label class="form-label">Nombre del tipo</label>
+      <input class="input-field" id="nt-label" type="text" placeholder="ej: Mantenimiento" oninput="generarKey()">
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;">Clave interna: <span id="nt-key-preview" style="color:var(--accent2);font-family:'DM Mono',monospace;">—</span></div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Nombre visible</label>
-      <input class="input-field" id="nt-label" type="text" placeholder="ej: Mantenimiento">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Primera fase</label>
-      <input class="input-field" id="nt-fase" type="text" placeholder="ej: Diagnóstico">
+    <div id="nt-fases-container">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <label class="form-label" style="margin:0;">Fases</label>
+        <button class="btn btn-sm" onclick="agregarFilaFase()" type="button">+ Fase</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;" id="nt-fases-table">
+        <thead>
+          <tr>
+            <th style="font-size:10px;color:var(--text2);text-align:left;padding:4px 8px;font-family:'DM Mono',monospace;">FASE</th>
+            <th style="font-size:10px;color:var(--text2);text-align:center;padding:4px 8px;font-family:'DM Mono',monospace;">PEQ.</th>
+            <th style="font-size:10px;color:var(--text2);text-align:center;padding:4px 8px;font-family:'DM Mono',monospace;">MED.</th>
+            <th style="font-size:10px;color:var(--text2);text-align:center;padding:4px 8px;font-family:'DM Mono',monospace;">GRA.</th>
+            <th style="width:30px;"></th>
+          </tr>
+        </thead>
+        <tbody id="nt-fases-body">
+          <tr id="nt-fase-row-1">
+            <td style="padding:4px 4px;"><input class="input-field" placeholder="Nombre fase" style="font-size:12px;padding:5px 8px;"></td>
+            <td style="padding:4px 4px;"><input class="horas-input" type="number" min="0" step="0.5" placeholder="—" style="width:56px;font-size:12px;"></td>
+            <td style="padding:4px 4px;"><input class="horas-input" type="number" min="0" step="0.5" placeholder="—" style="width:56px;font-size:12px;"></td>
+            <td style="padding:4px 4px;"><input class="horas-input" type="number" min="0" step="0.5" placeholder="—" style="width:56px;font-size:12px;"></td>
+            <td style="padding:4px 4px;"></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <div class="modal-actions">
       <button class="btn" onclick="cerrarModalTipo()">Cancelar</button>

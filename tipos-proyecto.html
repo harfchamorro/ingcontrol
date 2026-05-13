@@ -482,13 +482,6 @@ async function eliminarTipo(tipo) {
   }
 }
 
-cargar(); // Recargar para obtener el ID nuevo
-    setTipo(tipoActivo);
-  } catch(e) {
-    showToast('Error al crear la fase', 'error');
-  }
-}
-
 function showToast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = (type==='success'?'✓ ':'✕ ') + msg;

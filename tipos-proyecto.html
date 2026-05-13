@@ -56,6 +56,8 @@
   .horas-input::-webkit-inner-spin-button{opacity:0;}
   .horas-input.modified{border-color:var(--warning);}
   .horas-input.saved{border-color:var(--success);}
+  .horas-input[readonly]{opacity:.6;cursor:default;}
+  .horas-input[readonly]:focus{border-color:var(--border);}
 
   /* Botones */
   .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s;}
@@ -223,11 +225,13 @@ function renderPanel() {
     html += `<tr id="row-${f.id}">
       <td><span class="fase-orden">${f.orden}</span></td>
       <td><span class="fase-nombre">${f.nombre}</span>${f.descripcion?`<div style="font-size:11px;color:var(--text2);margin-top:2px;">${f.descripcion}</div>`:''}</td>
-      <td style="text-align:center;"><input class="horas-input" id="hp-${f.id}" type="number" min="0" step="0.5" value="${f.horas_pequeno||''}" placeholder="—" onchange="marcarModificado(${f.id})"></td>
-      <td style="text-align:center;"><input class="horas-input" id="hm-${f.id}" type="number" min="0" step="0.5" value="${f.horas_mediano||''}" placeholder="—" onchange="marcarModificado(${f.id})"></td>
-      <td style="text-align:center;"><input class="horas-input" id="hg-${f.id}" type="number" min="0" step="0.5" value="${f.horas_grande||''}" placeholder="—" onchange="marcarModificado(${f.id})"></td>
+      <td style="text-align:center;"><input class="horas-input" id="hp-${f.id}" type="number" min="0" step="0.5" value="${f.horas_pequeno||''}" placeholder="—" readonly></td>
+      <td style="text-align:center;"><input class="horas-input" id="hm-${f.id}" type="number" min="0" step="0.5" value="${f.horas_mediano||''}" placeholder="—" readonly></td>
+      <td style="text-align:center;"><input class="horas-input" id="hg-${f.id}" type="number" min="0" step="0.5" value="${f.horas_grande||''}" placeholder="—" readonly></td>
       <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+        <button class="btn btn-sm" id="btn-edit-${f.id}" onclick="editarFase(${f.id})" title="Editar horas">✏️</button>
         <button class="btn btn-save btn-sm" id="btn-${f.id}" onclick="guardarFase(${f.id})" style="display:none;">Guardar</button>
+        <button class="btn btn-sm" id="btn-cancel-${f.id}" onclick="cancelarEdicion(${f.id})" style="display:none;">Cancelar</button>
         <button class="btn btn-danger btn-sm" onclick="eliminarFase(${f.id},'${f.nombre}')">✕</button>
       </td>
     </tr>`;
@@ -250,11 +254,45 @@ function renderPanel() {
   document.getElementById('panel-fases').innerHTML = html;
 }
 
-function marcarModificado(id) {
+// Guardar valores originales para cancelar
+const _originalValues = {};
+
+function editarFase(id) {
+  // Guardar valores originales
+  _originalValues[id] = {
+    hp: document.getElementById(`hp-${id}`).value,
+    hm: document.getElementById(`hm-${id}`).value,
+    hg: document.getElementById(`hg-${id}`).value
+  };
+  // Habilitar inputs
   ['hp','hm','hg'].forEach(p => {
     const el = document.getElementById(`${p}-${id}`);
-    if(el) el.classList.add('modified');
+    if(el) { el.removeAttribute('readonly'); el.classList.add('modified'); }
   });
+  document.getElementById(`btn-edit-${id}`).style.display = 'none';
+  document.getElementById(`btn-${id}`).style.display = 'inline-flex';
+  document.getElementById(`btn-cancel-${id}`).style.display = 'inline-flex';
+  document.getElementById(`hp-${id}`).focus();
+}
+
+function cancelarEdicion(id) {
+  // Restaurar valores originales
+  if(_originalValues[id]) {
+    document.getElementById(`hp-${id}`).value = _originalValues[id].hp;
+    document.getElementById(`hm-${id}`).value = _originalValues[id].hm;
+    document.getElementById(`hg-${id}`).value = _originalValues[id].hg;
+  }
+  // Bloquear inputs
+  ['hp','hm','hg'].forEach(p => {
+    const el = document.getElementById(`${p}-${id}`);
+    if(el) { el.setAttribute('readonly', true); el.classList.remove('modified'); el.classList.remove('saved'); }
+  });
+  document.getElementById(`btn-edit-${id}`).style.display = 'inline-flex';
+  document.getElementById(`btn-${id}`).style.display = 'none';
+  document.getElementById(`btn-cancel-${id}`).style.display = 'none';
+}
+
+function marcarModificado(id) {
   const btn = document.getElementById(`btn-${id}`);
   if(btn) btn.style.display = 'inline-flex';
 }
@@ -287,10 +325,11 @@ async function guardarFase(id) {
 
     ['hp','hm','hg'].forEach(p => {
       const el = document.getElementById(`${p}-${id}`);
-      if(el) { el.classList.remove('modified'); el.classList.add('saved'); }
+      if(el) { el.setAttribute('readonly', true); el.classList.remove('modified'); el.classList.add('saved'); }
     });
-    const btn = document.getElementById(`btn-${id}`);
-    if(btn) btn.style.display = 'none';
+    document.getElementById(`btn-${id}`).style.display = 'none';
+    document.getElementById(`btn-cancel-${id}`).style.display = 'none';
+    document.getElementById(`btn-edit-${id}`).style.display = 'inline-flex';
     showToast('Horas guardadas correctamente', 'success');
   } catch(e) {
     showToast('Error al guardar', 'error');

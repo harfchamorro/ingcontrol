@@ -161,7 +161,10 @@ async function cargar() {
     });
     const text = await res.text();
     let data;
-    try { data = JSON.parse(text); } catch(e) { data = []; }
+    try { 
+      const clean = text.startsWith('=') ? text.slice(1) : text;
+      data = JSON.parse(clean); 
+    } catch(e) { data = []; }
     // N8N puede devolver objeto, array, o array envuelto
     if(Array.isArray(data)) allFases = data;
     else if(data && Array.isArray(data.data)) allFases = data.data;

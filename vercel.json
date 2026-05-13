@@ -4,6 +4,7 @@
     { "source": "/actividades", "destination": "/actividades.html" },
     { "source": "/registro", "destination": "/registro.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
-    { "source": "/cronograma", "destination": "/cronograma.html" }
+    { "source": "/cronograma", "destination": "/cronograma.html" },
+    { "source": "/tipos-proyecto", "destination": "/tipos-proyecto.html" }
   ]
 }

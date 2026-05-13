@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tipos de Proyecto - IngControl</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--border:#2e2e38;
+    --accent:#6ee7b7;--accent2:#818cf8;--text:#f1f1f3;--text2:#8888a0;
+    --danger:#f87171;--warning:#fbbf24;--success:#4ade80;--radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  
+  header{border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
+  .logo{font-size:15px;font-weight:600;color:var(--accent);}
+  .logo span{color:var(--text2);font-weight:400;}
+  nav a{font-size:13px;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:8px;transition:all .15s;margin-left:4px;}
+  nav a:hover{color:var(--text);background:var(--surface2);}
+  nav a.active{color:var(--accent);background:rgba(110,231,183,.1);}
+
+  .container{max-width:1100px;margin:0 auto;padding:32px 24px;}
+  .page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;}
+  .page-title{font-size:22px;font-weight:600;}
+  .page-sub{font-size:13px;color:var(--text2);margin-top:3px;}
+
+  /* Tabs */
+  .tabs-wrap{display:flex;gap:4px;margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:6px;flex-wrap:wrap;}
+  .tab-btn{padding:8px 16px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:all .15s;white-space:nowrap;}
+  .tab-btn:hover{color:var(--text);background:var(--surface2);}
+  .tab-btn.active{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+  .tab-badge{font-size:10px;font-family:'DM Mono',monospace;background:var(--bg);border-radius:8px;padding:1px 6px;margin-left:4px;color:var(--text2);}
+
+  /* Panel */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  .panel-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2);}
+  .panel-title{font-size:14px;font-weight:600;}
+  .panel-desc{font-size:12px;color:var(--text2);margin-top:2px;}
+
+  /* Tabla de fases */
+  .fases-table{width:100%;border-collapse:collapse;}
+  .fases-table th{padding:10px 16px;font-size:10px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;text-align:left;border-bottom:1px solid var(--border);background:var(--bg);}
+  .fases-table th.center{text-align:center;}
+  .fases-table td{padding:10px 16px;border-bottom:1px solid rgba(46,46,56,.5);vertical-align:middle;font-size:13px;}
+  .fases-table tr:last-child td{border-bottom:none;}
+  .fases-table tr:hover td{background:rgba(255,255,255,.02);}
+
+  .fase-orden{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);background:var(--bg);border-radius:6px;padding:2px 7px;display:inline-block;}
+  .fase-nombre{font-weight:500;}
+
+  /* Inputs de horas */
+  .horas-input{width:72px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:5px 8px;color:var(--text);font-size:13px;font-family:'DM Mono',monospace;text-align:center;outline:none;transition:border-color .15s;}
+  .horas-input:focus{border-color:var(--accent2);}
+  .horas-input::-webkit-inner-spin-button{opacity:0;}
+  .horas-input.modified{border-color:var(--warning);}
+  .horas-input.saved{border-color:var(--success);}
+
+  /* Botones */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s;}
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-primary{background:rgba(110,231,183,.12);border-color:var(--accent);color:var(--accent);}
+  .btn-primary:hover{background:rgba(110,231,183,.2);}
+  .btn-danger{background:rgba(248,113,113,.08);border-color:var(--danger);color:var(--danger);}
+  .btn-danger:hover{background:rgba(248,113,113,.15);}
+  .btn-sm{padding:4px 10px;font-size:12px;}
+  .btn-save{background:rgba(110,231,183,.1);border-color:rgba(110,231,183,.3);color:var(--accent);padding:5px 12px;font-size:12px;}
+  .btn-save:hover{background:rgba(110,231,183,.2);border-color:var(--accent);}
+
+  /* Formulario nueva fase */
+  .nueva-fase-row{background:rgba(129,140,248,.05);border-top:2px dashed rgba(129,140,248,.2);}
+  .nueva-fase-row td{padding:12px 16px;}
+  .input-field{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;width:100%;}
+  .input-field:focus{border-color:var(--accent2);}
+
+  /* Loading / empty */
+  .loading{text-align:center;padding:40px;color:var(--text2);font-size:13px;}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* Toast */
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;z-index:1000;display:none;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  .toast.show{display:flex;}
+  .toast.success{border-color:var(--success);color:var(--success);}
+  .toast.error{border-color:var(--danger);color:var(--danger);}
+
+  /* Info banner */
+  .info-banner{background:rgba(129,140,248,.08);border:1px solid rgba(129,140,248,.2);border-radius:10px;padding:12px 16px;font-size:12px;color:var(--text2);margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+
+  .col-nombre{width:240px;}
+  .col-orden{width:70px;}
+  .col-horas{width:100px;text-align:center;}
+  .col-acciones{width:100px;text-align:right;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Ing<span>Control</span> · <span>Tipos de Proyecto</span></div>
+  <nav>
+    <a href="index.html">Ingenieros</a>
+    <a href="proyectos.html">Proyectos</a>
+    <a href="actividades.html">Actividades</a>
+    <a href="registro.html">Registro</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="cronograma.html">Cronograma</a>
+    <a href="tipos-proyecto.html" class="active">Tipos</a>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Maestro de tipos de proyecto</div>
+      <div class="page-sub">Define las fases estándar y sus horas estimadas según complejidad</div>
+    </div>
+  </div>
+
+  <div class="info-banner">
+    ℹ️ Las horas definidas aquí se cargan automáticamente al crear un nuevo proyecto según su tipo y complejidad. Los proyectos ya creados no se ven afectados.
+  </div>
+
+  <!-- Tabs de tipos -->
+  <div class="tabs-wrap" id="tabs-wrap">
+    <div class="loading"><span class="spinner"></span>Cargando...</div>
+  </div>
+
+  <!-- Panel de fases -->
+  <div class="panel" id="panel-fases">
+    <div class="loading"><span class="spinner"></span>Selecciona un tipo de proyecto</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://primary-production-420b7.up.railway.app/webhook/tipos-proyecto';
+
+const TIPO_LABELS = {
+  externo: 'Externo',
+  interno: 'Interno',
+  desarrollo_producto: 'Desarrollo de Producto',
+  licitacion: 'Licitación',
+  edicion_planos: 'Edición de Planos',
+  otros: 'Otros'
+};
+
+const TIPOS_ORDER = ['externo','interno','desarrollo_producto','licitacion','edicion_planos','otros'];
+
+let allFases = [];
+let tipoActivo = 'externo';
+
+async function cargar() {
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({accion:'listar'})
+    });
+    const data = await res.json();
+    allFases = Array.isArray(data) ? data : [];
+    renderTabs();
+    renderPanel();
+  } catch(e) {
+    document.getElementById('panel-fases').innerHTML = '<div class="loading">Error al cargar datos.</div>';
+  }
+}
+
+function renderTabs() {
+  const wrap = document.getElementById('tabs-wrap');
+  wrap.innerHTML = TIPOS_ORDER.map(tipo => {
+    const count = allFases.filter(f => f.tipo_proyecto === tipo).length;
+    return `<button class="tab-btn ${tipo===tipoActivo?'active':''}" onclick="setTipo('${tipo}')">
+      ${TIPO_LABELS[tipo]||tipo}
+      <span class="tab-badge">${count}</span>
+    </button>`;
+  }).join('');
+}
+
+function setTipo(tipo) {
+  tipoActivo = tipo;
+  renderTabs();
+  renderPanel();
+}
+
+function renderPanel() {
+  const fases = allFases.filter(f => f.tipo_proyecto === tipoActivo).sort((a,b) => a.orden - b.orden);
+  const label = TIPO_LABELS[tipoActivo] || tipoActivo;
+
+  let html = `
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Fases — ${label}</div>
+        <div class="panel-desc">Define las horas estimadas por fase según complejidad del proyecto</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="mostrarNuevaFase()">+ Nueva fase</button>
+    </div>
+    <table class="fases-table">
+      <thead>
+        <tr>
+          <th class="col-orden">#</th>
+          <th class="col-nombre">Fase</th>
+          <th class="col-horas center">Pequeño<br><span style="font-size:9px;color:var(--text2);">horas</span></th>
+          <th class="col-horas center">Mediano<br><span style="font-size:9px;color:var(--text2);">horas</span></th>
+          <th class="col-horas center">Grande<br><span style="font-size:9px;color:var(--text2);">horas</span></th>
+          <th class="col-acciones"></th>
+        </tr>
+      </thead>
+      <tbody id="fases-body">`;
+
+  fases.forEach(f => {
+    html += `<tr id="row-${f.id}">
+      <td><span class="fase-orden">${f.orden}</span></td>
+      <td><span class="fase-nombre">${f.nombre}</span>${f.descripcion?`<div style="font-size:11px;color:var(--text2);margin-top:2px;">${f.descripcion}</div>`:''}</td>
+      <td style="text-align:center;"><input class="horas-input" id="hp-${f.id}" type="number" min="0" step="0.5" value="${f.horas_pequeno||''}" placeholder="—" onchange="marcarModificado(${f.id})"></td>
+      <td style="text-align:center;"><input class="horas-input" id="hm-${f.id}" type="number" min="0" step="0.5" value="${f.horas_mediano||''}" placeholder="—" onchange="marcarModificado(${f.id})"></td>
+      <td style="text-align:center;"><input class="horas-input" id="hg-${f.id}" type="number" min="0" step="0.5" value="${f.horas_grande||''}" placeholder="—" onchange="marcarModificado(${f.id})"></td>
+      <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+        <button class="btn btn-save btn-sm" id="btn-${f.id}" onclick="guardarFase(${f.id})" style="display:none;">Guardar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarFase(${f.id},'${f.nombre}')">✕</button>
+      </td>
+    </tr>`;
+  });
+
+  // Fila nueva fase (oculta)
+  html += `<tr class="nueva-fase-row" id="row-nueva" style="display:none;">
+    <td><input class="input-field" id="nf-orden" type="number" min="1" placeholder="${fases.length+1}" style="width:50px;text-align:center;"></td>
+    <td><input class="input-field" id="nf-nombre" type="text" placeholder="Nombre de la fase"></td>
+    <td style="text-align:center;"><input class="horas-input" id="nf-hp" type="number" min="0" step="0.5" placeholder="—"></td>
+    <td style="text-align:center;"><input class="horas-input" id="nf-hm" type="number" min="0" step="0.5" placeholder="—"></td>
+    <td style="text-align:center;"><input class="horas-input" id="nf-hg" type="number" min="0" step="0.5" placeholder="—"></td>
+    <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+      <button class="btn btn-primary btn-sm" onclick="crearFase()">Crear</button>
+      <button class="btn btn-sm" onclick="ocultarNuevaFase()">Cancelar</button>
+    </td>
+  </tr>`;
+
+  html += `</tbody></table>`;
+  document.getElementById('panel-fases').innerHTML = html;
+}
+
+function marcarModificado(id) {
+  ['hp','hm','hg'].forEach(p => {
+    const el = document.getElementById(`${p}-${id}`);
+    if(el) el.classList.add('modified');
+  });
+  const btn = document.getElementById(`btn-${id}`);
+  if(btn) btn.style.display = 'inline-flex';
+}
+
+async function guardarFase(id) {
+  const hp = document.getElementById(`hp-${id}`).value;
+  const hm = document.getElementById(`hm-${id}`).value;
+  const hg = document.getElementById(`hg-${id}`).value;
+
+  try {
+    await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        accion: 'actualizar_horas',
+        id,
+        horas_pequeno: hp !== '' ? parseFloat(hp) : null,
+        horas_mediano: hm !== '' ? parseFloat(hm) : null,
+        horas_grande: hg !== '' ? parseFloat(hg) : null
+      })
+    });
+
+    // Actualizar en memoria
+    const idx = allFases.findIndex(f => f.id == id);
+    if(idx >= 0) {
+      allFases[idx].horas_pequeno = hp !== '' ? parseFloat(hp) : null;
+      allFases[idx].horas_mediano = hm !== '' ? parseFloat(hm) : null;
+      allFases[idx].horas_grande = hg !== '' ? parseFloat(hg) : null;
+    }
+
+    ['hp','hm','hg'].forEach(p => {
+      const el = document.getElementById(`${p}-${id}`);
+      if(el) { el.classList.remove('modified'); el.classList.add('saved'); }
+    });
+    const btn = document.getElementById(`btn-${id}`);
+    if(btn) btn.style.display = 'none';
+    showToast('Horas guardadas correctamente', 'success');
+  } catch(e) {
+    showToast('Error al guardar', 'error');
+  }
+}
+
+async function eliminarFase(id, nombre) {
+  if(!confirm(`¿Desactivar la fase "${nombre}"? No afecta proyectos ya creados.`)) return;
+  try {
+    await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({accion:'eliminar_fase', id})
+    });
+    allFases = allFases.filter(f => f.id != id);
+    renderTabs();
+    renderPanel();
+    showToast(`Fase "${nombre}" desactivada`, 'success');
+  } catch(e) {
+    showToast('Error al eliminar', 'error');
+  }
+}
+
+function mostrarNuevaFase() {
+  const row = document.getElementById('row-nueva');
+  if(row) {
+    row.style.display = '';
+    document.getElementById('nf-nombre').focus();
+    const fases = allFases.filter(f => f.tipo_proyecto === tipoActivo);
+    document.getElementById('nf-orden').placeholder = fases.length + 1;
+  }
+}
+
+function ocultarNuevaFase() {
+  const row = document.getElementById('row-nueva');
+  if(row) row.style.display = 'none';
+}
+
+async function crearFase() {
+  const nombre = document.getElementById('nf-nombre').value.trim();
+  const fases = allFases.filter(f => f.tipo_proyecto === tipoActivo);
+  const orden = parseInt(document.getElementById('nf-orden').value) || fases.length + 1;
+  const hp = document.getElementById('nf-hp').value;
+  const hm = document.getElementById('nf-hm').value;
+  const hg = document.getElementById('nf-hg').value;
+
+  if(!nombre) { showToast('El nombre es requerido', 'error'); return; }
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        accion: 'crear_fase',
+        tipo_proyecto: tipoActivo,
+        nombre,
+        orden,
+        horas_pequeno: hp !== '' ? parseFloat(hp) : null,
+        horas_mediano: hm !== '' ? parseFloat(hm) : null,
+        horas_grande: hg !== '' ? parseFloat(hg) : null
+      })
+    });
+    showToast(`Fase "${nombre}" creada`, 'success');
+    await cargar(); // Recargar para obtener el ID nuevo
+    setTipo(tipoActivo);
+  } catch(e) {
+    showToast('Error al crear la fase', 'error');
+  }
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type==='success'?'✓ ':'✕ ') + msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+cargar();
+</script>
+</body>
+</html>

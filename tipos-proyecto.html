@@ -159,8 +159,14 @@ async function cargar() {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({accion:'listar'})
     });
-    const data = await res.json();
-    allFases = Array.isArray(data) ? data : [];
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { data = []; }
+    // N8N puede devolver objeto, array, o array envuelto
+    if(Array.isArray(data)) allFases = data;
+    else if(data && Array.isArray(data.data)) allFases = data.data;
+    else if(data && data.id) allFases = [data];
+    else allFases = [];
     renderTabs();
     renderPanel();
   } catch(e) {

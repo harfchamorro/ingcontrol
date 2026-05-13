@@ -94,6 +94,19 @@
   .col-orden{width:70px;}
   .col-horas{width:100px;text-align:center;}
   .col-acciones{width:100px;text-align:right;}
+
+  /* Modal nuevo tipo */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:460px;padding:24px;}
+  .modal-title{font-size:16px;font-weight:600;margin-bottom:4px;}
+  .modal-sub{font-size:12px;color:var(--text2);margin-bottom:20px;}
+  .form-group{margin-bottom:14px;}
+  .form-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:block;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+  .tab-btn-delete{background:none;border:none;color:var(--danger);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:6px;opacity:.6;transition:opacity .15s;}
+  .tab-btn-delete:hover{opacity:1;background:rgba(248,113,113,.1);}
+  .tab-add-btn{padding:8px 14px;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px dashed var(--border);background:transparent;color:var(--text2);transition:all .15s;white-space:nowrap;}
+  .tab-add-btn:hover{border-color:var(--accent);color:var(--accent);}
 </style>
 </head>
 <body>
@@ -140,7 +153,7 @@
 <script>
 const API = 'https://primary-production-420b7.up.railway.app/webhook/tipos-proyecto';
 
-const TIPO_LABELS = {
+const TIPO_LABELS_DEFAULT = {
   externo: 'Externo',
   interno: 'Interno',
   desarrollo_producto: 'Desarrollo de Producto',
@@ -149,7 +162,9 @@ const TIPO_LABELS = {
   otros: 'Otros'
 };
 
-const TIPOS_ORDER = ['externo','interno','desarrollo_producto','licitacion','edicion_planos','otros'];
+// Labels dinámicos — se construyen desde los datos
+let TIPO_LABELS = {...TIPO_LABELS_DEFAULT};
+let TIPOS_ORDER = ['externo','interno','desarrollo_producto','licitacion','edicion_planos','otros'];
 
 let allFases = [];
 let tipoActivo = 'externo';
@@ -181,13 +196,18 @@ async function cargar() {
 
 function renderTabs() {
   const wrap = document.getElementById('tabs-wrap');
-  wrap.innerHTML = TIPOS_ORDER.map(tipo => {
+  const tiposConFases = TIPOS_ORDER.filter(t => allFases.some(f => f.tipo_proyecto === t));
+  wrap.innerHTML = tiposConFases.map(tipo => {
     const count = allFases.filter(f => f.tipo_proyecto === tipo).length;
-    return `<button class="tab-btn ${tipo===tipoActivo?'active':''}" onclick="setTipo('${tipo}')">
-      ${TIPO_LABELS[tipo]||tipo}
-      <span class="tab-badge">${count}</span>
-    </button>`;
-  }).join('');
+    const isActive = tipo === tipoActivo;
+    return `<div style="display:flex;align-items:center;gap:2px;">
+      <button class="tab-btn ${isActive?'active':''}" onclick="setTipo('${tipo}')">
+        ${TIPO_LABELS[tipo]||tipo}
+        <span class="tab-badge">${count}</span>
+      </button>
+      ${isActive && count === 0 ? `<button class="tab-btn-delete" onclick="eliminarTipo('${tipo}')" title="Eliminar tipo">✕</button>` : ''}
+    </div>`;
+  }).join('') + `<button class="tab-add-btn" onclick="abrirModalTipo()">+ Nuevo tipo</button>`;
 }
 
 function setTipo(tipo) {
@@ -393,7 +413,71 @@ async function crearFase() {
       })
     });
     showToast(`Fase "${nombre}" creada`, 'success');
-    await cargar(); // Recargar para obtener el ID nuevo
+    await function abrirModalTipo() {
+  document.getElementById('modal-tipo').style.display = 'flex';
+  document.getElementById('nt-key').focus();
+}
+
+function cerrarModalTipo() {
+  document.getElementById('modal-tipo').style.display = 'none';
+  ['nt-key','nt-label','nt-fase'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function crearTipo() {
+  const key = document.getElementById('nt-key').value.trim().toLowerCase().replace(/\s+/g,'_');
+  const label = document.getElementById('nt-label').value.trim();
+  const fase = document.getElementById('nt-fase').value.trim();
+
+  if(!key || !label || !fase) { showToast('Completa todos los campos', 'error'); return; }
+  if(TIPOS_ORDER.includes(key)) { showToast('Ese tipo ya existe', 'error'); return; }
+
+  try {
+    await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        accion: 'crear_tipo',
+        tipo_proyecto: key,
+        nombre: fase,
+        orden: 1,
+        horas_pequeno: null,
+        horas_mediano: null,
+        horas_grande: null
+      })
+    });
+    TIPO_LABELS[key] = label;
+    TIPOS_ORDER.push(key);
+    cerrarModalTipo();
+    await cargar();
+    setTipo(key);
+    showToast(`Tipo "${label}" creado`, 'success');
+  } catch(e) {
+    showToast('Error al crear el tipo', 'error');
+  }
+}
+
+async function eliminarTipo(tipo) {
+  const label = TIPO_LABELS[tipo] || tipo;
+  if(!confirm(`¿Eliminar el tipo "${label}"? Se desactivarán todas sus fases.`)) return;
+  try {
+    await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({accion: 'eliminar_tipo', tipo_proyecto: tipo})
+    });
+    allFases = allFases.filter(f => f.tipo_proyecto !== tipo);
+    TIPOS_ORDER = TIPOS_ORDER.filter(t => t !== tipo);
+    delete TIPO_LABELS[tipo];
+    tipoActivo = TIPOS_ORDER[0] || 'externo';
+    renderTabs();
+    renderPanel();
+    showToast(`Tipo "${label}" eliminado`, 'success');
+  } catch(e) {
+    showToast('Error al eliminar', 'error');
+  }
+}
+
+cargar(); // Recargar para obtener el ID nuevo
     setTipo(tipoActivo);
   } catch(e) {
     showToast('Error al crear la fase', 'error');
@@ -409,5 +493,30 @@ function showToast(msg, type='success') {
 
 cargar();
 </script>
+<!-- Modal nuevo tipo -->
+<div class="modal-overlay" id="modal-tipo" style="display:none;" onclick="if(event.target===this)cerrarModalTipo()">
+  <div class="modal-box">
+    <div class="modal-title">Nuevo tipo de proyecto</div>
+    <div class="modal-sub">Define el identificador y la primera fase del nuevo tipo</div>
+    <div class="form-group">
+      <label class="form-label">Identificador (clave interna)</label>
+      <input class="input-field" id="nt-key" type="text" placeholder="ej: mantenimiento" style="text-transform:lowercase;">
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;">Sin espacios ni tildes. Ej: mantenimiento, consultoria</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre visible</label>
+      <input class="input-field" id="nt-label" type="text" placeholder="ej: Mantenimiento">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Primera fase</label>
+      <input class="input-field" id="nt-fase" type="text" placeholder="ej: Diagnóstico">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="cerrarModalTipo()">Cancelar</button>
+      <button class="btn btn-primary" onclick="crearTipo()">Crear tipo</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

@@ -111,6 +111,14 @@
   .fase-horas{font-size:12px;font-family:'DM Mono',monospace;color:var(--text2);text-align:right;}
   .fase-horas span{display:block;font-size:10px;text-align:right;}
   .info-tipo{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent2);background:rgba(129,140,248,.1);border-radius:6px;padding:4px 10px;margin-bottom:12px;}
+  .modal-gestion{max-width:480px;}
+  .ing-gestion-item{display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);}
+  .ing-gestion-info{display:flex;flex-direction:column;gap:2px;}
+  .ing-gestion-nombre{font-size:14px;font-weight:500;}
+  .ing-gestion-sub{font-size:12px;color:var(--text2);}
+  .ing-gestion-horas{font-size:12px;font-family:'DM Mono',monospace;color:var(--warning);margin-right:12px;}
+  .btn-desasignar{background:transparent;border:1px solid var(--danger);color:var(--danger);padding:5px 10px;font-size:12px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+  .btn-desasignar:hover{background:rgba(248,113,113,.1);}
 </style>
 </head>
 <body>
@@ -249,6 +257,24 @@
   </div>
 </div>
 
+<!-- MODAL GESTIÓN ASIGNACIONES -->
+<div class="modal-overlay" id="modal-gestion">
+  <div class="modal modal-gestion">
+    <div class="modal-title">Gestión de ingenieros asignados</div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Proyecto</label>
+      <div id="gestion-proyecto-nombre" style="font-size:14px;color:var(--text);padding:8px;background:var(--surface2);border-radius:8px;"></div>
+    </div>
+    <div style="margin-bottom:12px;font-size:12px;color:var(--text2);">Las horas ya registradas no se eliminan al desasignar un ingeniero.</div>
+    <div id="gestion-loading" style="text-align:center;padding:20px;color:var(--text2);"><span class="spinner"></span>Cargando...</div>
+    <div id="gestion-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="btn btn-ghost" onclick="cerrarModalGestion()">Cerrar</button>
+      <button class="btn btn-primary" onclick="abrirModalAssignDesde()">+ Asignar ingeniero</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL ASIGNAR -->
 <div class="modal-overlay" id="modal-assign">
   <div class="modal modal-assign">
@@ -287,9 +313,11 @@
 const API       = 'https://primary-production-420b7.up.railway.app/webhook/proyectos';
 const API_ING   = 'https://primary-production-420b7.up.railway.app/webhook/ingenieros';
 const API_FASES = 'https://primary-production-420b7.up.railway.app/webhook/proyecto-fases';
-const API_TIPOS = 'https://primary-production-420b7.up.railway.app/webhook/tipos-proyecto';
+const API_TIPOS        = 'https://primary-production-420b7.up.railway.app/webhook/tipos-proyecto';
+const API_DESASIGNAR   = 'https://primary-production-420b7.up.railway.app/webhook/desasignar';
+const API_ASIGNADOS    = 'https://primary-production-420b7.up.railway.app/webhook/listar-asignados';
 
-let proyectos = [], ingenieros = [], editandoId = null, asignandoId = null;
+let proyectos = [], ingenieros = [], editandoId = null, asignandoId = null, gestionandoId = null;
 
 // Fases por tipo — para el preview en el formulario
 const FASES_POR_TIPO = {
@@ -431,7 +459,7 @@ function renderCards(lista) {
       </div>
       <div class="card-actions">
         <button class="btn btn-edit btn-sm" onclick="editar(${p.id})">Editar</button>
-        <button class="btn btn-assign btn-sm" onclick="abrirModalAssign(${p.id}, '${p.nombre.replace(/'/g,"\\'")}')">Asignar</button>
+        <button class="btn btn-assign btn-sm" onclick="abrirModalGestion(${p.id}, '${p.nombre.replace(/'/g,"\\'")}')">Ingenieros</button>
         ${p.tipo_proyecto ? `<button class="btn btn-fases btn-sm" onclick="verFases(${p.id}, '${p.nombre.replace(/'/g,"\\'")}', '${p.tipo_proyecto}')">Ver fases</button>` : ''}
         <button class="btn btn-danger btn-sm" onclick="eliminar(${p.id})">Cancelar</button>
       </div>
@@ -534,6 +562,73 @@ async function guardar() {
     }
     cerrarModal(); cargar();
   } catch(e) { toast(e.message?.includes('Duplicate') ? 'Ya existe un proyecto con ese nombre' : 'Error al guardar','error'); }
+}
+
+// Modal gestión de asignaciones
+async function abrirModalGestion(id, nombre) {
+  gestionandoId = id;
+  asignandoId = id;
+  document.getElementById('gestion-proyecto-nombre').textContent = nombre;
+  document.getElementById('gestion-loading').style.display = 'block';
+  document.getElementById('gestion-list').innerHTML = '';
+  document.getElementById('modal-gestion').classList.add('open');
+  await cargarAsignados();
+}
+
+async function cargarAsignados() {
+  try {
+    const res = await fetch(API_ASIGNADOS, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({proyecto_id: gestionandoId})
+    });
+    const text = await res.text();
+    const clean = text.startsWith('=') ? text.slice(1) : text;
+    const data = JSON.parse(clean);
+    const lista = Array.isArray(data) ? data : [];
+    document.getElementById('gestion-loading').style.display = 'none';
+    const list = document.getElementById('gestion-list');
+    if(!lista.length) {
+      list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);font-size:14px;">No hay ingenieros asignados.</div>';
+      return;
+    }
+    list.innerHTML = lista.map(i => `
+      <div class="ing-gestion-item">
+        <div class="ing-gestion-info">
+          <div class="ing-gestion-nombre">${i.nombre} ${i.apellido}</div>
+          <div class="ing-gestion-sub">${i.cargo||''}</div>
+        </div>
+        <div style="display:flex;align-items:center;">
+          <div class="ing-gestion-horas">${i.horas_registradas||0}h registradas</div>
+          <button class="btn-desasignar" onclick="desasignar(${i.ingeniero_id}, '${i.nombre} ${i.apellido}')">Desasignar</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('gestion-loading').innerHTML = '<div style="color:var(--danger);padding:20px;text-align:center;">Error al cargar.</div>';
+  }
+}
+
+async function desasignar(ingeniero_id, nombre) {
+  if(!confirm(`¿Desasignar a ${nombre} de este proyecto? Las horas ya registradas se conservan.`)) return;
+  try {
+    await fetch(API_DESASIGNAR, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({proyecto_id: gestionandoId, ingeniero_id})
+    });
+    toast(`${nombre} desasignado correctamente`, 'success');
+    await cargarAsignados();
+    cargar();
+  } catch(e) { toast('Error al desasignar','error'); }
+}
+
+function cerrarModalGestion() { document.getElementById('modal-gestion').classList.remove('open'); gestionandoId=null; }
+
+function abrirModalAssignDesde() {
+  cerrarModalGestion();
+  const p = proyectos.find(p => p.id === asignandoId);
+  abrirModalAssign(asignandoId, p ? p.nombre : '');
 }
 
 // Modal asignar ingenieros

@@ -294,7 +294,7 @@ function calcularFechasFases(fases, fechaInicioProyecto, ingenieros) {
     const horasReal = parseFloat(f.horas_reales)||0;
     const inicio = new Date(cursor);
     const durDias = horasEst > 0
-      ? Math.ceil(horasEst / (HORAS_DIA * (currentTab==='capacidad' ? ings : 1)))
+      ? Math.ceil(horasEst / (HORAS_DIA * ings))
       : 5;
     const fin = addDiasHabiles(inicio, durDias);
     // La siguiente fase empieza el mismo día que termina la anterior

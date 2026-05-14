@@ -152,6 +152,7 @@
 
 <script>
 const API = 'https://primary-production-420b7.up.railway.app/webhook/tipos-proyecto';
+const API_CREAR_TIPO = 'https://primary-production-420b7.up.railway.app/webhook/crear-tipo';
 
 // Labels dinámicos — se construyen desde la BD
 let TIPO_LABELS = {};
@@ -518,10 +519,10 @@ async function crearTipo() {
 
   try {
     // 1. Crear el tipo en tipos_proyecto
-    await fetch(API, {
+    await fetch(API_CREAR_TIPO, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ accion: 'crear_tipo', nombre: key, descripcion: label })
+      body: JSON.stringify({ nombre: key, descripcion: label })
     });
     // 2. Crear las fases en fases_tipo_proyecto
     for(const f of fases) {

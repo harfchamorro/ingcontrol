@@ -384,8 +384,22 @@ async function guardarFase(id) {
 }
 
 async function eliminarFase(id, nombre) {
-  if(!confirm(`¿Desactivar la fase "${nombre}"? No afecta proyectos ya creados.`)) return;
   try {
+    // Verificar si el tipo activo tiene proyectos asignados
+    const resV = await fetch('https://primary-production-420b7.up.railway.app/webhook/verificar-tipo', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({nombre: tipoActivo})
+    });
+    const textV = await resV.text();
+    const cleanV = textV.startsWith('=') ? textV.slice(1) : textV;
+    const dataV = JSON.parse(cleanV);
+    const total = parseInt(dataV.total || dataV[0]?.total || 0);
+    if(total > 0) {
+      showToast(`No se puede eliminar: el tipo tiene ${total} proyecto(s) activo(s). Solo se puede eliminar si todos están completados o cancelados.`, 'error');
+      return;
+    }
+    if(!confirm(`¿Desactivar la fase "${nombre}"? No afecta proyectos ya creados.`)) return;
     await fetch(API, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -563,7 +577,7 @@ async function eliminarTipo(tipo) {
     const dataV = JSON.parse(cleanV);
     const total = parseInt(dataV.total || dataV[0]?.total || 0);
     if(total > 0) {
-      showToast(`No se puede eliminar: el tipo tiene ${total} proyecto(s) asignado(s)`, 'error');
+      showToast(`No se puede eliminar: el tipo tiene ${total} proyecto(s) activo(s). Solo se puede eliminar si todos están completados o cancelados.`, 'error');
       return;
     }
     if(!confirm(`¿Eliminar el tipo "${label}"? Se desactivarán todas sus fases.`)) return;

@@ -287,6 +287,7 @@
 const API       = 'https://primary-production-420b7.up.railway.app/webhook/proyectos';
 const API_ING   = 'https://primary-production-420b7.up.railway.app/webhook/ingenieros';
 const API_FASES = 'https://primary-production-420b7.up.railway.app/webhook/proyecto-fases';
+const API_TIPOS = 'https://primary-production-420b7.up.railway.app/webhook/tipos-proyecto';
 
 let proyectos = [], ingenieros = [], editandoId = null, asignandoId = null;
 
@@ -300,7 +301,7 @@ const FASES_POR_TIPO = {
   otros:              ['Actividad a Discreción']
 };
 
-const TIPO_LABELS = {
+let TIPO_LABELS = {
   externo:'Proyecto Externo', interno:'Proyecto Interno',
   desarrollo_producto:'Desarrollo de Producto', licitacion:'Licitación',
   edicion_planos:'Edición de Planos', otros:'Otros'
@@ -334,6 +335,39 @@ function badgeTipo(t) {
   return `<span class="badge badge-tipo">⬡ ${TIPO_LABELS[t]||t}</span>`;
 }
 
+async function cargarTipos() {
+  try {
+    const res = await fetch(API_TIPOS, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({accion: 'listar'})
+    });
+    const text = await res.text();
+    const clean = text.startsWith('=') ? text.slice(1) : text;
+    const tipos = JSON.parse(clean);
+    if(!Array.isArray(tipos) || !tipos.length) return;
+
+    // Actualizar TIPO_LABELS
+    tipos.forEach(t => {
+      if(!TIPO_LABELS[t.nombre]) {
+        TIPO_LABELS[t.nombre] = t.nombre.replace(/_/g,' ').replace(/\w/g, c => c.toUpperCase());
+      }
+    });
+
+    // Poblar select del formulario
+    const selTipo = document.getElementById('f-tipo');
+    const selFiltro = document.getElementById('filtro-tipo');
+    if(selTipo) {
+      selTipo.innerHTML = '<option value="">Seleccionar...</option>' +
+        tipos.map(t => `<option value="${t.nombre}">${TIPO_LABELS[t.nombre]||t.nombre}</option>`).join('');
+    }
+    if(selFiltro) {
+      selFiltro.innerHTML = '<option value="">Todos los tipos</option>' +
+        tipos.map(t => `<option value="${t.nombre}">${TIPO_LABELS[t.nombre]||t.nombre}</option>`).join('');
+    }
+  } catch(e) { console.warn('No se pudieron cargar tipos:', e); }
+}
+
 async function cargar() {
   try {
     const [dataP, dataI] = await Promise.all([
@@ -342,6 +376,7 @@ async function cargar() {
     ]);
     proyectos = Array.isArray(dataP) ? dataP : (dataP.data ? [].concat(dataP.data) : []);
     ingenieros = Array.isArray(dataI) ? dataI : (dataI.data ? [].concat(dataI.data) : []);
+    await cargarTipos();
     renderCards(proyectos);
     actualizarStats();
   } catch(e) {

@@ -440,6 +440,7 @@ async function crearFase() {
         horas_grande: hg !== '' ? parseFloat(hg) : null
       })
     });
+    await cargar();
     showToast(`Fase "${nombre}" creada`, 'success');
   } catch(e) {
     showToast('Error al crear la fase', 'error');

@@ -224,8 +224,7 @@ async function cargar() {
 
 function renderTabs() {
   const wrap = document.getElementById('tabs-wrap');
-  const tiposConFases = TIPOS_ORDER.filter(t => allFases.some(f => f.tipo_proyecto === t));
-  wrap.innerHTML = tiposConFases.map(tipo => {
+  wrap.innerHTML = TIPOS_ORDER.map(tipo => {
     const count = allFases.filter(f => f.tipo_proyecto === tipo).length;
     const isActive = tipo === tipoActivo;
     return `<div style="display:flex;align-items:center;gap:2px;">
@@ -233,7 +232,7 @@ function renderTabs() {
         ${TIPO_LABELS[tipo]||tipo}
         <span class="tab-badge">${count}</span>
       </button>
-      ${isActive && count === 0 ? `<button class="tab-btn-delete" onclick="eliminarTipo('${tipo}')" title="Eliminar tipo">✕</button>` : ''}
+      ${isActive ? `<button class="tab-btn-delete" onclick="eliminarTipo('${tipo}')" title="Eliminar tipo">✕</button>` : ''}
     </div>`;
   }).join('') + `<button class="tab-add-btn" onclick="abrirModalTipo()">+ Nuevo tipo</button>`;
 }
@@ -552,8 +551,22 @@ async function crearTipo() {
 
 async function eliminarTipo(tipo) {
   const label = TIPO_LABELS[tipo] || tipo;
-  if(!confirm(`¿Eliminar el tipo "${label}"? Se desactivarán todas sus fases.`)) return;
   try {
+    // Verificar si tiene proyectos asignados
+    const resV = await fetch('https://primary-production-420b7.up.railway.app/webhook/verificar-tipo', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({nombre: tipo})
+    });
+    const textV = await resV.text();
+    const cleanV = textV.startsWith('=') ? textV.slice(1) : textV;
+    const dataV = JSON.parse(cleanV);
+    const total = parseInt(dataV.total || dataV[0]?.total || 0);
+    if(total > 0) {
+      showToast(`No se puede eliminar: el tipo tiene ${total} proyecto(s) asignado(s)`, 'error');
+      return;
+    }
+    if(!confirm(`¿Eliminar el tipo "${label}"? Se desactivarán todas sus fases.`)) return;
     await fetch(API, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},

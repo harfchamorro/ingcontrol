@@ -287,19 +287,27 @@ function diasHabilesEntre(start, end) {
 
 function calcularFechasFases(fases, fechaInicioProyecto, ingenieros) {
   const ings = Math.max(parseInt(ingenieros)||1, 1);
-  let cursor = parseDate(fechaInicioProyecto);
-  while(cursor.getDay()===0||cursor.getDay()===6) cursor.setDate(cursor.getDate()+1);
+  const capacidadDia = HORAS_DIA * ings; // horas disponibles por día
+  const fechaBase = parseDate(fechaInicioProyecto);
+  while(fechaBase.getDay()===0||fechaBase.getDay()===6) fechaBase.setDate(fechaBase.getDate()+1);
+
+  // Calcular inicio y fin de cada fase en horas acumuladas continuas
+  let horasOffset = 0; // horas desde inicio del proyecto
   return fases.map(f => {
     const horasEst = parseFloat(f.horas_estimadas)||0;
     const horasReal = parseFloat(f.horas_reales)||0;
-    const inicio = new Date(cursor);
-    const durDias = horasEst > 0
-      ? Math.ceil(horasEst / (HORAS_DIA * ings))
-      : 5;
-    const fin = addDiasHabiles(inicio, durDias);
-    // La siguiente fase empieza el mismo día que termina la anterior
-    cursor = new Date(fin);
-    while(cursor.getDay()===0||cursor.getDay()===6) cursor.setDate(cursor.getDate()+1);
+
+    // Día de inicio = floor(horasOffset / capacidadDia)
+    const diaInicio = Math.floor(horasOffset / capacidadDia);
+    // Día de fin = ceil((horasOffset + horasEst) / capacidadDia)
+    const horasFin = horasOffset + (horasEst > 0 ? horasEst : capacidadDia);
+    const diaFin = Math.ceil(horasFin / capacidadDia);
+
+    const inicio = addDiasHabiles(new Date(fechaBase), diaInicio);
+    const fin = addDiasHabiles(new Date(fechaBase), Math.max(diaFin, diaInicio + 1));
+    const durDias = Math.max(1, diaFin - diaInicio);
+
+    horasOffset += horasEst > 0 ? horasEst : capacidadDia;
     const pct = horasEst > 0 ? Math.min(Math.round(horasReal/horasEst*100),100) : 0;
     return {...f, _inicio: inicio, _fin: fin, _durDias: durDias, _pct: pct};
   });

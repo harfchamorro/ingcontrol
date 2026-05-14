@@ -153,40 +153,67 @@
 <script>
 const API = 'https://primary-production-420b7.up.railway.app/webhook/tipos-proyecto';
 
-const TIPO_LABELS_DEFAULT = {
-  externo: 'Externo',
-  interno: 'Interno',
-  desarrollo_producto: 'Desarrollo de Producto',
-  licitacion: 'Licitación',
-  edicion_planos: 'Edición de Planos',
-  otros: 'Otros'
-};
-
-// Labels dinámicos — se construyen desde los datos
-let TIPO_LABELS = {...TIPO_LABELS_DEFAULT};
-let TIPOS_ORDER = ['externo','interno','desarrollo_producto','licitacion','edicion_planos','otros'];
+// Labels dinámicos — se construyen desde la BD
+let TIPO_LABELS = {};
+let TIPOS_ORDER = [];
 
 let allFases = [];
-let tipoActivo = 'externo';
+let tipoActivo = '';
+
+function parseN8N(text) {
+  try {
+    const clean = text.startsWith('=') ? text.slice(1) : text;
+    const data = JSON.parse(clean);
+    if(Array.isArray(data)) return data;
+    if(data && Array.isArray(data.data)) return data.data;
+    if(data && data.id) return [data];
+    return [];
+  } catch(e) { return []; }
+}
+
+// Convierte nombre de BD a label legible
+function nombreToLabel(nombre) {
+  const MAP = {
+    externo: 'Externo',
+    interno: 'Interno',
+    desarrollo_producto: 'Desarrollo de Producto',
+    licitacion: 'Licitación',
+    edicion_planos: 'Edición de Planos',
+    otros: 'Otros'
+  };
+  return MAP[nombre] || nombre.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
 
 async function cargar() {
   try {
-    const res = await fetch(API, {
+    // 1. Cargar tipos desde tipos_proyecto
+    const resTipos = await fetch(API, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({accion:'listar'})
     });
-    const text = await res.text();
-    let data;
-    try { 
-      const clean = text.startsWith('=') ? text.slice(1) : text;
-      data = JSON.parse(clean); 
-    } catch(e) { data = []; }
-    // N8N puede devolver objeto, array, o array envuelto
-    if(Array.isArray(data)) allFases = data;
-    else if(data && Array.isArray(data.data)) allFases = data.data;
-    else if(data && data.id) allFases = [data];
-    else allFases = [];
+    const tipos = parseN8N(await resTipos.text());
+
+    // Construir TIPO_LABELS y TIPOS_ORDER desde la BD
+    TIPO_LABELS = {};
+    TIPOS_ORDER = [];
+    tipos.filter(t => t.activo !== 0).forEach(t => {
+      TIPO_LABELS[t.nombre] = nombreToLabel(t.nombre);
+      TIPOS_ORDER.push(t.nombre);
+    });
+
+    if(!tipoActivo || !TIPOS_ORDER.includes(tipoActivo)) {
+      tipoActivo = TIPOS_ORDER[0] || '';
+    }
+
+    // 2. Cargar fases desde fases_tipo_proyecto
+    const resFases = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({accion:'listar_fases'})
+    });
+    allFases = parseN8N(await resFases.text());
+
     renderTabs();
     renderPanel();
   } catch(e) {
@@ -490,12 +517,19 @@ async function crearTipo() {
   if(!fases.length) { showToast('Agrega al menos una fase', 'error'); return; }
 
   try {
+    // 1. Crear el tipo en tipos_proyecto
+    await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ accion: 'crear_tipo', nombre: key, descripcion: label })
+    });
+    // 2. Crear las fases en fases_tipo_proyecto
     for(const f of fases) {
       await fetch(API, {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
-          accion: 'crear_tipo',
+          accion: 'crear_fase',
           tipo_proyecto: key,
           nombre: f.nombre,
           orden: f.orden,
@@ -505,11 +539,9 @@ async function crearTipo() {
         })
       });
     }
-    TIPO_LABELS[key] = label;
-    TIPOS_ORDER.push(key);
     cerrarModalTipo();
+    tipoActivo = key;
     await cargar();
-    setTipo(key);
     showToast(`Tipo "${label}" creado con ${fases.length} fase(s)`, 'success');
   } catch(e) {
     showToast('Error al crear el tipo', 'error');
@@ -523,14 +555,10 @@ async function eliminarTipo(tipo) {
     await fetch(API, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({accion: 'eliminar_tipo', tipo_proyecto: tipo})
+      body: JSON.stringify({accion: 'eliminar_tipo', nombre: tipo})
     });
-    allFases = allFases.filter(f => f.tipo_proyecto !== tipo);
-    TIPOS_ORDER = TIPOS_ORDER.filter(t => t !== tipo);
-    delete TIPO_LABELS[tipo];
-    tipoActivo = TIPOS_ORDER[0] || 'externo';
-    renderTabs();
-    renderPanel();
+    tipoActivo = TIPOS_ORDER.filter(t => t !== tipo)[0] || '';
+    await cargar();
     showToast(`Tipo "${label}" eliminado`, 'success');
   } catch(e) {
     showToast('Error al eliminar', 'error');
